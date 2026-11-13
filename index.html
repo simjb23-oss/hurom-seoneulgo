@@ -94,7 +94,7 @@ h2{font-size:clamp(32px,4.2vw,56px);line-height:1.18;font-weight:800;letter-spac
 .card li{display:flex;justify-content:space-between;border-bottom:1px dashed var(--line);padding-bottom:10px}
 .card li span:last-child{font-weight:600}
 .timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:22px}
-.timeline div{font-size:12px;color:var(--sub)}
+.timeline div{font-size:12px;line-height:1.45;color:var(--sub)}
 .timeline div::before{content:"";display:block;height:6px;border-radius:3px;background:var(--line);margin-bottom:8px}
 .timeline .a::before{background:#f7d968}.timeline .b::before{background:var(--yellow)}.timeline .c::before{background:var(--ink)}
 
@@ -125,15 +125,15 @@ footer{padding:56px 0 72px;font-size:13px;color:var(--sub);border-top:1px solid 
 <body>
 
 <nav><div class="wrap"><b>HUROM<span>서늘고</span></b>
-<ul><li><a href="#why">문제</a></li><li><a href="#how">작동</a></li><li><a href="#lineup">라인업</a></li><li><a href="#spec">사양</a></li><li><a href="#plan">가격·일정</a></li></ul></div></nav>
+<ul><li><a href="#why">문제</a></li><li><a href="#how">작동</a></li><li><a href="#lineup">라인업</a></li><li><a href="#spec">사양</a></li><li><a href="#detail">보관 원리</a></li><li><a href="#plan">가격·일정</a></li></ul></div></nav>
 
 <header class="hero">
   <img src="img/hero.jpg" alt="서늘고 제품 렌더">
   <div class="wrap">
-    <div class="eyebrow">휴롬 신제품 기획서 · 2026.11</div>
+    <div class="eyebrow">휴롬 신제품 기획서 · 자취·1인 가구를 위한 과일 보관 가전 · 2026.11</div>
     <h1>마지막 한 개까지, <em>샛노랗게.</em></h1>
-    <p>냉장고도 온장고도 아닌, 13°C의 서늘고.<br>바나나를 처음 산 날의 색 그대로 지킵니다.</p>
-    <div class="chips"><span class="chip">버튼 하나</span><span class="chip">13°C 정온</span><span class="chip">조리대 위 6.4L</span><span class="chip">목표가 12.9만 원</span></div>
+    <p>혼자 사는 집은 바나나 한 송이를 다 먹기 전에 버립니다.<br>냉장고도 온장고도 아닌 서늘고가 1~2주 동안 처음 산 날의 색 그대로 지킵니다.</p>
+    <div class="chips"><span class="chip">버튼 하나로 품목 선택</span> <span class="chip">품목별 13~15°C</span> <span class="chip">조리대 위 6.4L</span> <span class="chip">목표가 12.9만 원</span></div>
   </div>
 </header>
 
@@ -142,13 +142,13 @@ footer{padding:56px 0 72px;font-size:13px;color:var(--sub);border-top:1px solid 
     <div class="rv">
       <div class="kicker">문제</div>
       <h2>바나나는 어디에 둬도 금방 상합니다.</h2>
-      <p class="lead">밖에 두면 사흘 만에 무르고, 냉장고에 넣으면 하루 만에 껍질이 까매집니다. 그래서 버리는 게 아까워 아예 안 사는 사람이 생깁니다.</p>
+      <p class="lead">밖에 두면 사흘 만에 무르고, 냉장고에 넣으면 하루 만에 껍질이 까매집니다. 혼자서는 한 송이를 그 안에 다 못 먹어서, 버리는 게 아까워 아예 안 사는 사람이 생깁니다.</p>
     </div>
     <div class="photo rv"><img src="img/compare.jpg" alt="실온·냉장·서늘고 바나나 비교"></div>
     <div class="trio rv">
       <div><small>실온 25°C</small><strong>3일이면 갈색 점</strong><p>빨리 익어 금방 무릅니다.</p></div>
       <div><small>냉장 4°C</small><strong>하루면 까만 껍질</strong><p>12°C 아래에서는 저온 장해를 입습니다.</p></div>
-      <div class="on"><small>서늘고 13°C</small><strong>8일 넘게 노랗게</strong><p>목표치입니다. 1주차 실측으로 확인합니다.</p></div>
+      <div class="on"><small>서늘고 14°C (바나나 모드)</small><strong>1~2주 노랗게</strong><p>목표치입니다. 11/23~12/07 14일 보관 실험으로 확인합니다.</p></div>
     </div>
   </div>
 </section>
@@ -158,7 +158,7 @@ footer{padding:56px 0 72px;font-size:13px;color:var(--sub);border-top:1px solid 
     <h2>너무 차갑지도, 너무 덥지도 않게.</h2>
     <div class="scale">
       <div><b>4°</b><span>냉장고</span></div>
-      <div class="mid"><b>13°</b><span>서늘고</span></div>
+      <div class="mid"><b>14°</b><span>서늘고 · 바나나</span></div>
       <div><b>25°</b><span>실온</span></div>
     </div>
   </div>
@@ -184,13 +184,13 @@ footer{padding:56px 0 72px;font-size:13px;color:var(--sub);border-top:1px solid 
     <div class="rv">
       <div class="kicker">라인업</div>
       <h2>몸체는 하나, 색이 품목을 알려 줍니다.</h2>
-      <p class="lead">받침 띠 색만 바꿔 금형은 그대로 쓰고, 고르는 재미를 더했습니다.</p>
+      <p class="lead">버튼을 누를 때마다 품목이 바뀌고, LED 색과 온도(13~15°C)가 같이 바뀝니다. 받침 띠 색만 바꿔 금형은 그대로 씁니다.</p>
     </div>
     <div class="photo rv"><img src="img/lineup.jpg" alt="색상별 라인업"></div>
     <div class="modes rv">
       <div class="mode"><div class="dot" style="background:var(--yellow)"></div><b>바나나 · 망고</b><div class="t">14°C</div><p>껍질이 까매지지 않고 향이 남습니다.</p></div>
-      <div class="mode"><div class="dot" style="background:var(--purple)"></div><b>고구마 · 감자</b><div class="t">13°C</div><p>냉장고에 넣으면 단맛이 빠지고 심이 굳습니다.</p></div>
-      <div class="mode"><div class="dot" style="background:var(--red)"></div><b>토마토 · 아보카도</b><div class="t">12°C</div><p>냉장고에 넣으면 식감이 푸석해집니다.</p></div>
+      <div class="mode"><div class="dot" style="background:var(--purple)"></div><b>고구마 · 단호박</b><div class="t">13°C</div><p>냉장고에 넣으면 심이 굳고 맛이 떨어집니다.</p></div>
+      <div class="mode"><div class="dot" style="background:var(--red)"></div><b>토마토 · 아보카도</b><div class="t">15°C</div><p>저온 장해 경계(12°C)에서 3°C 떨어뜨렸습니다. 냉장고에 넣으면 식감이 푸석해집니다.</p></div>
     </div>
   </div>
 </section>
@@ -203,39 +203,54 @@ footer{padding:56px 0 72px;font-size:13px;color:var(--sub);border-top:1px solid 
     </div>
     <div class="spec rv">
       <div><b>6.4L</b><span>안쪽 용량 · 바나나 한 송이</span></div>
-      <div><b>25×28×23</b><span>W×H×D cm · 바닥은 A4 크기</span></div>
+      <div><b>25×28×23</b><span>W×H×D cm · 바닥 25×23cm</span></div>
       <div><b>35dB↓</b><span>소음 목표 · 도서관 수준</span></div>
-      <div><b>0.5kWh↓</b><span>하루 전력 목표</span></div>
+      <div><b>0.5kWh↓</b><span>하루 전력 목표 · 여름 30°C 실측 필요</span></div>
       <div><b>1</b><span>버튼 · 앱·블루투스 없음</span></div>
       <div><b>3벌</b><span>새 금형 · 몸체·커버·문틀</span></div>
-      <div><b>12V</b><span>외장 어댑터 · 인증 부담 축소</span></div>
+      <div><b>USB-C</b><span>PD 65W 충전기 전원 검토 · 안 되면 12V 어댑터</span></div>
       <div><b>펠티어</b><span>냉각부는 ODM 기존 플랫폼</span></div>
     </div>
   </div>
 </section>
 
-<section id="plan" style="background:var(--paper)">
+
+<section id="detail" style="background:var(--paper)">
+  <div class="wrap">
+    <div class="rv">
+      <div class="kicker">보관 원리</div>
+      <h2>온도만이 아니라, 습도와 가스까지.</h2>
+    </div>
+    <div class="modes rv">
+      <div class="mode"><b>습도</b><div class="t">85~90%</div><p>문에 자석 패킹을 둘러 안쪽 수분이 빠지지 않게 합니다. 냉각판에 맺힌 물은 뒤쪽 홈으로 모아 바닥 트레이에서 다시 증발시킵니다. 껍질이 마르거나 쭈글해지지 않게 하는 목표치입니다.</p></div>
+      <div class="mode"><b>에틸렌 가스</b><div class="t">흡착 패드</div><p>바나나는 스스로 익히는 가스(에틸렌)를 내뿜습니다. 바닥에 흡착 패드를 두어 가스를 빨아들입니다. 패드는 1~2개월마다 바꾸는 소모품입니다. 한 번에 한 품목만 넣도록 안내합니다.</p></div>
+      <div class="mode"><b>익히기 모드</b><div class="t">18°C · 48시간</div><p>버튼을 2초 누르면 18°C로 올리고 패드 칸을 닫아 가스를 남겨 둡니다. 덜 익은 초록 바나나가 노랗게 익으면 48시간 뒤 14°C 보관 모드로 자동으로 돌아갑니다.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="plan">
   <div class="wrap">
     <div class="rv">
       <div class="kicker">가격과 일정</div>
-      <h2>만들기 전에, 6주 안에 수요부터 확인합니다.</h2>
+      <h2>만들기 전에, 5주 반 동안 실측하고 수요를 확인합니다.</h2>
     </div>
     <div class="cols rv">
       <div class="card">
         <h3>목표 정가</h3>
         <div class="price">12.9<small>만 원</small></div>
         <ul>
-          <li><span>와디즈 얼리버드</span><span>9.9만 원</span></li>
           <li><span>유통 수수료 30%</span><span>−3.9만 원</span></li>
           <li><span>원가 추정</span><span>−5.0만 원</span></li>
-          <li><span>대당 공헌이익</span><span>약 4만 원</span></li>
+          <li><span>대당 공헌이익 (정가)</span><span>약 4만 원</span></li>
+          <li><span>얼리버드 9.9만 원일 때</span><span>약 2만 원</span></li>
         </ul>
       </div>
       <div class="card">
-        <h3>6주 검증 · 11/16 → 12/24</h3>
+        <h3>검증 38일 · 11/16 → 12/24</h3>
         <div class="price">12/24<small> Go/Stop</small></div>
         <div class="timeline">
-          <div class="a">1주<br>설문</div><div class="a">2주<br>와디즈 오픈예정</div><div class="b">3주<br>보관 실험</div><div class="b">4주<br>소음·전력</div><div class="b">5주<br>ODM 견적</div><div class="c">6주<br>판정</div>
+          <div class="a">1주 11/16<br>설문·시제품 준비</div><div class="b">2주 11/23<br>보관 실험 시작</div><div class="b">3주 11/30<br>소음·전력 실측</div><div class="a">4주 12/07<br>14일 보관 결과 → 와디즈 오픈예정</div><div class="b">5주 12/14<br>알림 집계·ODM 견적</div><div class="c">12/24<br>Go/Stop</div>
         </div>
       </div>
     </div>
@@ -246,7 +261,7 @@ footer{padding:56px 0 72px;font-size:13px;color:var(--sub);border-top:1px solid 
       <div><small>소음</small><b>35dB↓</b></div>
       <div><small>ODM 원가 견적</small><b>5만 원↓</b></div>
     </div>
-    <p class="lead" style="font-size:15px">다섯 가지가 모두 Go 기준을 넘으면 개발에 들어갑니다. 금액·크기·보관일은 모두 추정치이며, 견적과 실측으로 바로잡습니다.</p>
+    <p class="lead" style="font-size:15px">다섯 가지가 모두 Go 기준을 넘으면 개발에 들어갑니다. 와디즈는 보관·소음 실측이 나온 뒤(4주차)에 열어, 확인한 숫자로만 사람을 모읍니다. 금액·크기·보관일·전력은 모두 추정치이며, 견적과 실측으로 바로잡습니다. 얼리버드 이익 약 2만 원은 수수료 30% 기준이고, 와디즈 수수료(약 10%)만 들면 약 3.9만 원입니다.</p>
   </div>
 </section>
 
