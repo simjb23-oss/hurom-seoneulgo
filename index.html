@@ -105,6 +105,23 @@ h2{font-size:clamp(32px,4.2vw,56px);line-height:1.18;font-weight:800;letter-spac
 
 footer{padding:56px 0 72px;font-size:13px;color:var(--sub);border-top:1px solid var(--line)}
 
+
+/* exploded view */
+#structure{height:520vh;padding:0;background:linear-gradient(#fbfaf7,#f1efe9)}
+.xv-sticky{position:sticky;top:0;height:100vh;overflow:hidden;display:grid;grid-template-columns:minmax(280px,360px) 1fr;align-items:center}
+.xv-text{padding:0 0 0 max(32px,calc((100vw - 1120px)/2 + 32px));position:relative;z-index:2}
+.xv-step{position:absolute;top:50%;transform:translateY(-40%);opacity:0;transition:opacity .6s,transform .6s;max-width:330px}
+.xv-step.on{opacity:1;transform:translateY(-50%)}
+.xv-step h2{font-size:clamp(28px,3.2vw,44px)}
+.xv-step p{font-size:16px;color:var(--sub);margin-top:16px}
+.xv-stage{position:relative;height:100vh}
+#xv-canvas{width:100%;height:100%;display:block}
+#xv-labels{position:absolute;inset:0;pointer-events:none}
+.xv-label{position:absolute;left:0;top:0;white-space:nowrap;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.92);border:1px solid rgba(0,0,0,.08);box-shadow:0 4px 14px rgba(0,0,0,.06);opacity:0}
+.xv-fallback{display:none}
+@media (max-width:860px){.xv-sticky{grid-template-columns:1fr;grid-template-rows:auto 1fr}.xv-text{padding:88px 24px 0;height:200px}.xv-step{top:110px}.xv-stage{height:calc(100vh - 200px)}.xv-label{font-size:11px;padding:4px 8px}}
+@media print{#structure{height:auto}.xv-sticky{position:static;height:auto}}
+
 /* motion: one, subtle */
 .rv{opacity:0;transform:translateY(28px);transition:opacity .9s ease,transform .9s cubic-bezier(.2,.7,.2,1)}
 .rv.in{opacity:1;transform:none}
@@ -125,7 +142,7 @@ footer{padding:56px 0 72px;font-size:13px;color:var(--sub);border-top:1px solid 
 <body>
 
 <nav><div class="wrap"><b>HUROM<span>서늘고</span></b>
-<ul><li><a href="#why">문제</a></li><li><a href="#how">작동</a></li><li><a href="#lineup">라인업</a></li><li><a href="#spec">사양</a></li><li><a href="#detail">보관 원리</a></li><li><a href="#plan">가격·일정</a></li></ul></div></nav>
+<ul><li><a href="#why">문제</a></li><li><a href="#how">작동</a></li><li><a href="#structure">구조</a></li><li><a href="#lineup">라인업</a></li><li><a href="#spec">사양</a></li><li><a href="#detail">보관 원리</a></li><li><a href="#plan">가격·일정</a></li></ul></div></nav>
 
 <header class="hero">
   <img src="img/hero.jpg" alt="서늘고 제품 렌더">
@@ -178,6 +195,20 @@ footer{padding:56px 0 72px;font-size:13px;color:var(--sub);border-top:1px solid 
     <div class="photo rv"><img src="img/life.jpg" alt="주방에서 바나나를 꺼내는 장면"></div>
   </div>
 </section>
+
+
+<section id="structure">
+  <div class="xv-sticky">
+    <div class="xv-text">
+      <div class="xv-step on"><div class="kicker">구조</div><h2>밖에서 보면 단순한 상자.</h2><p>스크롤을 내리면 서늘고가 부품별로 분해됩니다. 다시 올리면 합쳐집니다.</p></div>
+      <div class="xv-step"><div class="kicker">구조 · 분해</div><h2>부품 11개, 냉각은 뒤쪽 6cm에.</h2><p>펠티어 소자 하나를 안쪽·바깥쪽 방열판과 팬이 감쌉니다. 안쪽 팬 바람이 UV 광촉매 망을 지나며 에틸렌을 분해하고, 맺힌 물은 바닥 트레이 심지로 돌아가 습도를 지킵니다.</p></div>
+      <div class="xv-step"><div class="kicker">구조 · 공기 흐름</div><h2>팬 하나로 냉각, 분해, 순환까지.</h2><p>위쪽 뒤에서 빨아들인 공기가 광촉매 망과 냉각판을 지나 아래 앞쪽으로 나오고, 바나나 주위를 한 바퀴 돕니다. 파란 점이 공기 흐름입니다.</p></div>
+    </div>
+    <div class="xv-stage"><canvas id="xv-canvas" aria-label="서늘고 분해도 3D"></canvas><div id="xv-labels"></div></div>
+  </div>
+</section>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module" src="explode.js"></script>
 
 <section id="lineup" style="background:var(--paper)">
   <div class="wrap">
