@@ -98,6 +98,7 @@ function gradPlane(w, h, x, y, z, rx) {
 // 1. 겉 케이스 — 모서리 둥근 상자. 흰 몸체·색 하단은 높이로 칠하고, 앞 둥근 창 자리는 뚫어 안이 보이게
 const SHELL = { s: new THREE.Vector3(1, 1, 1), hole: new THREE.Vector2(0, 0.165), holeR: 1.0, seam: BASE - H / 2 };   // 몸체 가운데 기준(앞 = -z, 뒤에서 180° 돌림)
 const WIN_C = new THREE.Vector2(-SHELL.hole.x, CY0 + SHELL.hole.y), WIN_R = SHELL.holeR, FRONT_Z = D / 2;   // 회전(앞=+z) 뒤 창 가운데
+<<<<<<< Updated upstream
 // 하단 색 — 노랑(기본)·초록·빨강. 몸체·창은 그대로, 하단·창 빛 링·버튼 링이 같은 색으로 바뀝니다
 const COLORS = {
   yellow: { a: 0xe8b52a, b: 0xe8b52a, grain: 0, led: 0xffc83c },
@@ -110,6 +111,22 @@ const BASE_COL = { a: { value: new THREE.Color() }, b: { value: new THREE.Color(
 function setColor(k) {
   const c = COLORS[k] || COLORS.yellow;
   BASE_COL.a.value.set(c.a); BASE_COL.b.value.set(c.b); BASE_COL.grain.value = c.grain; LED.tgt.set(c.led);
+=======
+// 색 = 품목 모드 — 노랑(바나나)·보라(고구마)·빨강(토마토). 고르면 하단·빛 링·버튼 링이 같은 색으로 바뀜
+const COLORS = {
+  yellow: { a: 0xe8b52a, b: 0xe8b52a, grain: 0, mi: 0 },
+  purple: { a: 0x9a5fc0, b: 0x9a5fc0, grain: 0, mi: 1 },
+  red: { a: 0xe4573f, b: 0xe4573f, grain: 0, mi: 2 },
+};
+// 모드 빛: 바나나(노랑) → 고구마(보라) → 토마토(빨강). 색 단추를 누르기 전에는 2.6초마다 차례로 바뀜, 누르면 그 색에 멈춤
+const MODES = [{ name: '바나나 14°C', c: 0xffc83c }, { name: '고구마 13°C', c: 0xb36ad8 }, { name: '토마토 15°C', c: 0xff4a3a }];
+const LED = { inner: null, cur: new THREE.Color(0xffc83c), tgt: new THREE.Color(0xffc83c) };
+const BASE_COL = { a: { value: new THREE.Color() }, b: { value: new THREE.Color() }, grain: { value: 0 } };
+function setColor(k, auto) {
+  const c = COLORS[k] || COLORS.yellow;
+  if (!auto) LED.pick = c.mi;
+  BASE_COL.a.value.set(c.a); BASE_COL.b.value.set(c.b); BASE_COL.grain.value = c.grain;
+>>>>>>> Stashed changes
   document.querySelectorAll('[data-xv-color]').forEach(b => b.classList.toggle('on', b.dataset.xvColor === k));
 }
 window.xvSetColor = setColor;
@@ -141,7 +158,11 @@ M.case.onBeforeCompile = sh => {
   const mount = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.05, 24), M.ceramic); mount.position.set(WIN_C.x, CY + ih / 2 - 0.03, 0.55); g.add(mount);
   const bar = new THREE.Mesh(new RoundedBoxGeometry(iw - 0.3, 0.03, 0.08, 2, 0.015), M.bar); bar.position.set(0, CY + ih / 2 - 0.03, 0.85); g.add(bar);
   const light = new THREE.PointLight(0xffe2a8, 1.2, 3.6, 1.5); light.position.set(0, CY + 0.5, 0.6); g.add(light); LED.inner = light;
+<<<<<<< Updated upstream
   part('겉 케이스 · 흰 몸체 + 하단(노랑·초록·빨강)', g, [0, 0, 0], new THREE.Vector3(W / 2 - 0.3, 0.5, 0.9));
+=======
+  part('겉 케이스 · 흰 몸체 + 하단(노랑·보라·빨강)', g, [0, 0, 0], new THREE.Vector3(W / 2 - 0.3, 0.5, 0.9));
+>>>>>>> Stashed changes
 }
 // 2. 문 — 둥근 유리창 + 빛 링 + 패킹·경첩 (분해 때 앞으로 빠짐)
 {
@@ -467,8 +488,14 @@ function frame(now) {
   const fk = new URLSearchParams(location.search).get('focus');   // 부품 가까이 보기(캡처용): ?p=0.6&focus=제어
   if (fk) { const pt = parts.find(q => q.el.textContent.includes(fk)); if (pt) { const c = new THREE.Box3().setFromObject(pt.obj).getCenter(new THREE.Vector3()); camera.position.set(c.x + 1.0, c.y + 1.3, c.z + 1.0); camera.lookAt(c); } }
 
+<<<<<<< Updated upstream
   // 빛 링: 고른 하단 색으로 숨 쉬듯 켜짐(색 단추를 누르면 부드럽게 넘어감)
   LED.cur.lerp(LED.tgt, 0.08);
+=======
+  // 빛 링: 모드 색으로 숨 쉬듯 켜짐(조립 상태에서 2.6초마다 다음 모드)
+  const mi = LED.pick ?? Math.floor(now / 2600) % 3;
+  if (LED.pick === undefined && LED.lastMi !== mi) { LED.lastMi = mi; setColor(Object.keys(COLORS)[mi], true); } LED.tgt.set(MODES[mi].c); LED.cur.lerp(LED.tgt, 0.08);
+>>>>>>> Stashed changes
   // 화면에 처음 보일 때 1.8초 동안 서서히 켜짐
   if (LED.t0 === undefined && sec.getBoundingClientRect().top < innerHeight) LED.t0 = now;
   const ramp = LED.t0 === undefined ? 0 : Math.min(1, (now - LED.t0) / 1800), on = ramp * ramp * (3 - 2 * ramp);
@@ -510,6 +537,10 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+<<<<<<< Updated upstream
 setColor(new URLSearchParams(location.search).get('c') || 'yellow');
+=======
+{ const q = new URLSearchParams(location.search).get('c'); setColor(q || 'yellow', !q); }
+>>>>>>> Stashed changes
 document.querySelectorAll('[data-xv-color]').forEach(b => b.addEventListener('click', () => setColor(b.dataset.xvColor)));
 document.documentElement.classList.add('xv-ready');
