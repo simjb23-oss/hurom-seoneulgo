@@ -98,7 +98,7 @@ function gradPlane(w, h, x, y, z, rx) {
 // 1. 겉 케이스 — 모서리 둥근 상자. 흰 몸체·색 하단은 높이로 칠하고, 앞 둥근 창 자리는 뚫어 안이 보이게
 const SHELL = { s: new THREE.Vector3(1, 1, 1), hole: new THREE.Vector2(0, 0.165), holeR: 1.0, seam: BASE - H / 2 };   // 몸체 가운데 기준(앞 = -z, 뒤에서 180° 돌림)
 const WIN_C = new THREE.Vector2(-SHELL.hole.x, CY0 + SHELL.hole.y), WIN_R = SHELL.holeR, FRONT_Z = D / 2;   // 회전(앞=+z) 뒤 창 가운데
-// 하단 색 — 노랑(기본)·보라·빨강. 몸체·창은 그대로, 하단만 바뀝니다(바꿀 때 안쪽 LED 10초 켜짐)
+// 하단 색 — 노랑(기본)·보라·빨강. 몸체·창은 그대로, 하단과 안쪽 LED 색이 같이 바뀝니다(바꿀 때 10초 켜짐)
 const COLORS = {
   yellow: { a: 0xe8b52a, b: 0xe8b52a, grain: 0, led: 0xffc83c },
   purple: { a: 0x9a5fc0, b: 0x9a5fc0, grain: 0, led: 0x9a4ff0 },
@@ -491,8 +491,10 @@ function frame(now) {
   const tt = LED.t0 === undefined ? 99 : (now - LED.t0) / 1000;
   const sm = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
   const on = sm(tt / 0.6) * (1 - sm((tt - 10) / 1.0));
-  if (LED.inner) LED.inner.intensity = 2.2 * on;
-  M.inLed.color.set(0xd9d4ca).lerp(new THREE.Color(0xfff6e2), on);
+  // 안쪽 LED 색 = 고른 하단 색(노랑·보라·빨강)
+  if (LED.inner) { LED.inner.color.copy(LED.cur).lerp(new THREE.Color(0xffffff), 0.2); LED.inner.intensity = 2.6 * on; }
+  M.linerGrad.color.set(0xffffff).lerp(LED.cur.clone().lerp(new THREE.Color(0xffffff), 0.35), 0.55 * on);   // 안쪽 벽이 LED 색으로 물듦
+  M.inLed.color.set(0xd9d4ca).lerp(LED.cur.clone().lerp(new THREE.Color(0xffffff), 0.15), on);
   M.btnRing.color.copy(LED.cur); M.btnRing.emissive.setRGB(0, 0, 0);
   // spin fans
   product.traverse(o => { if (o.userData.spin) o.rotation.z += dt * (2 + 10 * (1 - e)); });
