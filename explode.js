@@ -101,7 +101,7 @@ const WIN_C = new THREE.Vector2(-SHELL.hole.x, CY0 + SHELL.hole.y), WIN_R = SHEL
 // 하단 색 — 노랑(기본)·보라·빨강. 몸체·창은 그대로, 하단·창 빛 링·버튼 링이 같은 색으로 바뀝니다
 const COLORS = {
   yellow: { a: 0xe8b52a, b: 0xe8b52a, grain: 0, led: 0xffc83c },
-  purple: { a: 0x9a5fc0, b: 0x9a5fc0, grain: 0, led: 0xb36ad8 },
+  purple: { a: 0x9a5fc0, b: 0x9a5fc0, grain: 0, led: 0xa04ff0 },
   red: { a: 0xe4573f, b: 0xe4573f, grain: 0, led: 0xff5a3c },
 };
 // 빛 링은 고른 하단 색과 같은 색으로 켜집니다(색을 바꾸면 부드럽게 넘어감)
