@@ -170,7 +170,7 @@ footer{padding:56px 0 72px;font-size:13px;color:var(--sub);border-top:1px solid 
 <body>
 
 <nav><div class="wrap"><b>HUROM<span>서늘고</span></b>
-<ul><li><a href="#why">문제</a></li><li><a href="#how">작동</a></li><li><a href="#structure">구조</a></li><li><a href="#lineup">라인업</a></li><li><a href="#spec">사양</a></li><li><a href="#detail">보관 원리</a></li><li><a href="#plan">제안 이유</a></li></ul></div></nav>
+<ul><li><a href="#why">문제</a></li><li><a href="#how">작동</a></li><li><a href="#structure">구조</a></li><li><a href="#lineup">라인업</a></li><li><a href="#spec">사양</a></li><li><a href="#detail">보관 원리</a></li><li><a href="#cost">개발비·소싱</a></li><li><a href="#plan">제안 이유</a></li></ul></div></nav>
 
 <header class="hero">
   <img src="img/hero.jpg" alt="서늘고 제품 렌더">
@@ -325,6 +325,41 @@ footer{padding:56px 0 72px;font-size:13px;color:var(--sub);border-top:1px solid 
   </div>
 </section>
 
+
+<section id="cost">
+  <div class="wrap">
+    <div class="rv">
+      <div class="kicker">개발비와 소싱</div>
+      <h2>냉각부는 사 오고, 겉모습만 새로 만듭니다.</h2>
+      <p class="lead2">펠티어 냉각 소형 냉장고(화장품 냉장고·미니 와인셀러)는 이미 ODM 업체가 많이 만드는 제품입니다. 서늘고는 그 냉각부를 그대로 쓰고, 휴롬이 겉모습·창·빛 링·품목 모드만 새로 만들어 개발비와 기간을 줄입니다.</p>
+    </div>
+    <div class="rv" style="margin-top:24px">
+      <small style="display:block;margin-bottom:8px;color:var(--muted,#777)">개발비 추정 · 견적 받기 전 범위(만 원)</small>
+      <table class="risk"><tr><th>항목</th><th>내용</th><th>추정</th><th>어디서</th></tr>
+      <tr><td><b>산업 디자인</b></td><td>겉모습·창·빛 링·색 3종 확정, 3D 설계 데이터</td><td>1,000~2,000</td><td>휴롬 디자인팀 + 외주 디자인 회사</td></tr>
+      <tr><td><b>워킹 목업·시제품</b></td><td>3D 프린팅·CNC 목업 2~3대, 보관 실험용</td><td>300~800</td><td>국내 시제품 업체(목업 전문)</td></tr>
+      <tr><td><b>금형 3벌</b></td><td>몸체·뒷커버·문틀 사출 금형</td><td>3,000~6,000</td><td>ODM 일괄(중국) 또는 휴롬 기존 사출 협력사</td></tr>
+      <tr><td><b>냉각부</b></td><td>펠티어 소자·방열판·팬 모듈</td><td>개발비 거의 없음</td><td>ODM 기존 플랫폼 그대로</td></tr>
+      <tr><td><b>제어 보드·펌웨어</b></td><td>버튼 1개·모드 3개·익히기·빛 링 제어</td><td>500~1,000</td><td>ODM 펌웨어 수정 또는 국내 임베디드 외주</td></tr>
+      <tr><td><b>인증·시험</b></td><td>본체 KC 전자파, 식품 접촉부 소재 시험 (어댑터는 KC 받은 기성품)</td><td>300~600</td><td>국내 시험인증기관</td></tr>
+      <tr><td><b>합계</b></td><td></td><td><b>약 0.5억~1억</b></td><td>ODM에 금형까지 맡기면 아래쪽에 가까움</td></tr></table>
+      <p class="note">모두 추정치입니다. ODM 3곳 이상 견적을 받아 바로잡습니다.</p>
+    </div>
+    <div class="sum2 rv" style="margin-top:28px">
+      <div><small>부품별 소싱처</small><ul>
+        <li><b>완제품 ODM:</b> 중국 광둥(선전·포산)·저장(닝보·츠시)의 화장품 냉장고·미니 와인셀러 업체. 알리바바에서 「thermoelectric mini fridge ODM」으로 찾고 3~5곳에 견적을 냅니다.</li>
+        <li><b>펠티어 소자:</b> 12V 범용 규격(TEC1-127xx 계열)이라 여러 곳에서 살 수 있어 공급 위험이 낮습니다.</li>
+        <li><b>12V 어댑터:</b> KC 안전 인증을 받은 국내 유통 기성품을 씁니다. 따로 인증받지 않아도 됩니다.</li>
+        <li><b>UV-A LED·광촉매 망:</b> 공기청정기·제습기 부품 업체에서 기성품으로 삽니다.</li>
+        <li><b>둥근 창·빛 링:</b> 투명 사출(PC·PMMA)과 LED 띠는 ODM에 같이 맡깁니다.</li></ul></div>
+      <div><small>두 가지 길</small><ul>
+        <li><b>A. ODM 일괄 (추천):</b> 디자인만 휴롬이 주고 금형·생산·냉각부를 ODM이 맡습니다. 개발비가 적고 빠릅니다(약 6~9개월). 대신 ODM 의존이 큽니다.</li>
+        <li><b>B. 휴롬 주도:</b> 금형은 휴롬 소유로 국내 협력사에서 만들고, 냉각 모듈만 사 옵니다. 개발비는 크지만 품질과 금형을 휴롬이 쥡니다.</li>
+        <li>첫 제품은 <b>A로 빨리 내고</b>, 반응이 좋으면 2세대부터 B로 옮기는 것을 제안합니다.</li></ul>
+      <p class="note">개발 기간·금형비는 업계 일반 범위로 잡은 추정입니다. 휴롬 기존 협력사 가능 여부는 확인이 필요합니다.</p></div>
+    </div>
+  </div>
+</section>
 
 <section id="detail" style="background:var(--paper)">
   <div class="wrap">

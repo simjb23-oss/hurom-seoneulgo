@@ -395,16 +395,34 @@ function pcbBoard(w, h) {
   g.userData.inner = true;
   part('배선 하네스 · +12V · GND · 신호선', g, [1.2, -0.2, -1.5], new THREE.Vector3(-1.05, CY, -0.2));
 }
-// 14. 12V 외장 어댑터 + DC 케이블
+// 14. 12V 외장 어댑터 — 노트북 어댑터처럼 납작한 흰 몸체, 한쪽은 AC 코드(220V 플러그), 반대쪽은 DC 케이블(페라이트 코어·배럴 플러그)
 {
   const g = new THREE.Group();
-  const brick = new THREE.Mesh(new RoundedBoxGeometry(0.7, 0.28, 0.42, 4, 0.06), M.dark); g.add(brick);
-  const lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.14), M.label); lbl.rotation.x = -Math.PI / 2; lbl.position.y = 0.141; g.add(lbl);
-  const c = new THREE.CatmullRomCurve3([new THREE.Vector3(-0.35, 0, 0), new THREE.Vector3(-0.8, -0.1, 0.3), new THREE.Vector3(-0.9, 0.4, 0.9), new THREE.Vector3(-0.7, 0.75, 1.2)]);
-  g.add(new THREE.Mesh(new THREE.TubeGeometry(c, 40, 0.025, 8), M.dark));
-  const plug = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.16, 16), M.dark); plug.position.copy(c.getPoint(1)); g.add(plug);
-  g.position.set(0.9, 0.14, -D / 2 - 0.9);
-  part('12V 외장 어댑터 · 60W', g, [1.2, 0, -2.2], new THREE.Vector3(0.35, 0.2, 0));
+  const AW = M.adW || (M.adW = new THREE.MeshPhysicalMaterial({ color: 0xf4f2ed, roughness: 0.45, clearcoat: 0.3, clearcoatRoughness: 0.4 }));
+  const AC = M.adC || (M.adC = new THREE.MeshStandardMaterial({ color: 0xeceae5, roughness: 0.55 }));
+  const brick = new THREE.Mesh(new RoundedBoxGeometry(0.62, 0.18, 0.34, 6, 0.07), AW); brick.castShadow = true; g.add(brick);
+  // 윗면 얕은 홈 띠 + 작은 전원 표시등
+  const band = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.004, 0.012), M.label); band.position.set(0, 0.091, -0.11); g.add(band);
+  const dot = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.004, 16), M.btnRing); dot.position.set(0.24, 0.091, 0.12); g.add(dot);
+  // 케이블 부싱(꺾임 방지) 양쪽
+  const bush = (x, dir) => { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.032, 0.09, 16), AC); b.rotation.z = Math.PI / 2; b.position.set(x + dir * 0.045, 0, 0); g.add(b); };
+  bush(0.31, 1); bush(-0.31, -1);
+  // DC 케이블: 바닥을 따라 느슨하게 → 페라이트 코어 → 배럴 플러그
+  const dc = new THREE.CatmullRomCurve3([[0.4, 0, 0], [0.7, -0.06, 0.1], [0.95, -0.08, 0.45], [0.8, -0.08, 0.8], [0.45, -0.08, 0.95]].map(v => new THREE.Vector3(...v)));
+  g.add(new THREE.Mesh(new THREE.TubeGeometry(dc, 60, 0.016, 10), AC));
+  const fer = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.09, 20), AC); fer.position.copy(dc.getPoint(0.82)); fer.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dc.getTangent(0.82)); g.add(fer);
+  const end = dc.getPoint(1), tan = dc.getTangent(1);
+  const ph = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.1, 16), AC); ph.position.copy(end).addScaledVector(tan, 0.05); ph.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tan); g.add(ph);
+  const tipM = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.05, 12), M.alu); tipM.position.copy(end).addScaledVector(tan, 0.12); tipM.quaternion.copy(ph.quaternion); g.add(tipM);
+  // AC 코드: 짧게 → 220V 2핀 플러그
+  const ac = new THREE.CatmullRomCurve3([[-0.4, 0, 0], [-0.7, -0.06, -0.08], [-0.9, -0.08, 0.2], [-0.95, -0.08, 0.5]].map(v => new THREE.Vector3(...v)));
+  g.add(new THREE.Mesh(new THREE.TubeGeometry(ac, 50, 0.02, 10), AC));
+  const pe = ac.getPoint(1), pt = ac.getTangent(1);
+  const plug = new THREE.Group(); plug.position.copy(pe); plug.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), pt); g.add(plug);
+  const body = new THREE.Mesh(new RoundedBoxGeometry(0.11, 0.07, 0.14, 4, 0.025), AW); body.position.z = 0.07; plug.add(body);
+  [-0.025, 0.025].forEach(x => { const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.08, 12), M.alu); pin.rotation.x = Math.PI / 2; pin.position.set(x, 0, 0.18); plug.add(pin); });
+  g.position.set(0.9, 0.09, -D / 2 - 0.9);
+  part('12V 외장 어댑터 · 60W', g, [1.2, 0, -2.2], new THREE.Vector3(0, 0.15, 0));
 }
 
 /* airflow arrows (show in assembled state) */
