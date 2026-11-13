@@ -95,23 +95,21 @@ function gradPlane(w, h, x, y, z, rx) {
   }
   geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); return geo;
 }
-// 1. 겉 케이스 — 모서리 둥근 상자. 흰 몸체·나무 하단은 높이로 칠하고, 앞 둥근 창 자리는 뚫어 안이 보이게
+// 1. 겉 케이스 — 모서리 둥근 상자. 흰 몸체·색 하단은 높이로 칠하고, 앞 둥근 창 자리는 뚫어 안이 보이게
 const SHELL = { s: new THREE.Vector3(1, 1, 1), hole: new THREE.Vector2(0, 0.165), holeR: 1.0, seam: BASE - H / 2 };   // 몸체 가운데 기준(앞 = -z, 뒤에서 180° 돌림)
 const WIN_C = new THREE.Vector2(-SHELL.hole.x, CY0 + SHELL.hole.y), WIN_R = SHELL.holeR, FRONT_Z = D / 2;   // 회전(앞=+z) 뒤 창 가운데
-// 하단 색 — 나무(기본)·노랑·초록·빨강. 몸체·창은 그대로, 하단과 버튼 링만 바뀝니다
+// 하단 색 — 노랑(기본)·초록·빨강. 몸체·창은 그대로, 하단·창 빛 링·버튼 링이 같은 색으로 바뀝니다
 const COLORS = {
-  wood: { a: 0xc29a6b, b: 0xa77d52, grain: 0.7, ring: 0xe0b45a },
-  yellow: { a: 0xe8b52a, b: 0xe8b52a, grain: 0, ring: 0xf2c440 },
-  green: { a: 0x8fb46a, b: 0x8fb46a, grain: 0, ring: 0x9cc477 },
-  red: { a: 0xe4573f, b: 0xe4573f, grain: 0, ring: 0xf06a50 },
+  yellow: { a: 0xe8b52a, b: 0xe8b52a, grain: 0, led: 0xffc83c },
+  green: { a: 0x8fb46a, b: 0x8fb46a, grain: 0, led: 0x6fd858 },
+  red: { a: 0xe4573f, b: 0xe4573f, grain: 0, led: 0xff5a3c },
 };
-// 모드 빛: 바나나(노랑) → 고구마(주황) → 토마토(빨강). 조립된 상태에서 버튼을 누른 것처럼 차례로 바뀜
-const MODES = [{ name: '바나나 14°C', c: 0xffc83c }, { name: '고구마 13°C', c: 0xb36ad8 }, { name: '토마토 15°C', c: 0xff4a3a }];
+// 빛 링은 고른 하단 색과 같은 색으로 켜집니다(색을 바꾸면 부드럽게 넘어감)
 const LED = { inner: null, cur: new THREE.Color(0xffc83c), tgt: new THREE.Color(0xffc83c) };
 const BASE_COL = { a: { value: new THREE.Color() }, b: { value: new THREE.Color() }, grain: { value: 0 } };
 function setColor(k) {
-  const c = COLORS[k] || COLORS.wood;
-  BASE_COL.a.value.set(c.a); BASE_COL.b.value.set(c.b); BASE_COL.grain.value = c.grain;
+  const c = COLORS[k] || COLORS.yellow;
+  BASE_COL.a.value.set(c.a); BASE_COL.b.value.set(c.b); BASE_COL.grain.value = c.grain; LED.tgt.set(c.led);
   document.querySelectorAll('[data-xv-color]').forEach(b => b.classList.toggle('on', b.dataset.xvColor === k));
 }
 window.xvSetColor = setColor;
@@ -143,7 +141,7 @@ M.case.onBeforeCompile = sh => {
   const mount = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.05, 24), M.ceramic); mount.position.set(WIN_C.x, CY + ih / 2 - 0.03, 0.55); g.add(mount);
   const bar = new THREE.Mesh(new RoundedBoxGeometry(iw - 0.3, 0.03, 0.08, 2, 0.015), M.bar); bar.position.set(0, CY + ih / 2 - 0.03, 0.85); g.add(bar);
   const light = new THREE.PointLight(0xffe2a8, 1.2, 3.6, 1.5); light.position.set(0, CY + 0.5, 0.6); g.add(light); LED.inner = light;
-  part('겉 케이스 · 흰 몸체 + 하단(나무·노랑·초록·빨강)', g, [0, 0, 0], new THREE.Vector3(W / 2 - 0.3, 0.5, 0.9));
+  part('겉 케이스 · 흰 몸체 + 하단(노랑·초록·빨강)', g, [0, 0, 0], new THREE.Vector3(W / 2 - 0.3, 0.5, 0.9));
 }
 // 2. 문 — 둥근 유리창 + 빛 링 + 패킹·경첩 (분해 때 앞으로 빠짐)
 {
@@ -469,14 +467,14 @@ function frame(now) {
   const fk = new URLSearchParams(location.search).get('focus');   // 부품 가까이 보기(캡처용): ?p=0.6&focus=제어
   if (fk) { const pt = parts.find(q => q.el.textContent.includes(fk)); if (pt) { const c = new THREE.Box3().setFromObject(pt.obj).getCenter(new THREE.Vector3()); camera.position.set(c.x + 1.0, c.y + 1.3, c.z + 1.0); camera.lookAt(c); } }
 
-  // 빛 링: 모드 색으로 숨 쉬듯 켜짐(조립 상태에서 2.6초마다 다음 모드)
-  const mi = Math.floor(now / 2600) % 3; LED.tgt.set(MODES[mi].c); LED.cur.lerp(LED.tgt, 0.08);
+  // 빛 링: 고른 하단 색으로 숨 쉬듯 켜짐(색 단추를 누르면 부드럽게 넘어감)
+  LED.cur.lerp(LED.tgt, 0.08);
   // 화면에 처음 보일 때 1.8초 동안 서서히 켜짐
   if (LED.t0 === undefined && sec.getBoundingClientRect().top < innerHeight) LED.t0 = now;
   const ramp = LED.t0 === undefined ? 0 : Math.min(1, (now - LED.t0) / 1800), on = ramp * ramp * (3 - 2 * ramp);
   const breathe = on * (0.85 + 0.15 * Math.sin(now / 420));
-  M.ringLed.color.copy(LED.cur).lerp(new THREE.Color(0xffffff), 0.35).lerp(new THREE.Color(0xe8e4dc), 1 - on);
-  if (M.glow) { M.glow.color.copy(LED.cur); M.glow.opacity = 0.75 * breathe; }
+  M.ringLed.color.copy(LED.cur).lerp(new THREE.Color(0xffffff), 0.18).lerp(new THREE.Color(0xe8e4dc), 1 - on);
+  if (M.glow) { M.glow.color.copy(LED.cur); M.glow.opacity = 0.9 * breathe; }
   if (LED.inner) { LED.inner.color.copy(LED.cur).lerp(new THREE.Color(0xfff2d8), 0.6); LED.inner.intensity = 1.2 * breathe; }
   M.btnRing.color.copy(LED.cur); M.btnRing.emissive.copy(LED.cur).multiplyScalar(on);
   // spin fans
@@ -512,6 +510,6 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-setColor(new URLSearchParams(location.search).get('c') || 'wood');
+setColor(new URLSearchParams(location.search).get('c') || 'yellow');
 document.querySelectorAll('[data-xv-color]').forEach(b => b.addEventListener('click', () => setColor(b.dataset.xvColor)));
 document.documentElement.classList.add('xv-ready');
