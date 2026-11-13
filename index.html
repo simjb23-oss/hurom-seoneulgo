@@ -137,6 +137,10 @@ footer{padding:56px 0 72px;font-size:13px;color:var(--sub);border-top:1px solid 
 #xv-canvas{width:100%;height:100%;display:block}
 #xv-labels{position:absolute;inset:0;pointer-events:none}
 .xv-label{position:absolute;left:0;top:0;white-space:nowrap;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.92);border:1px solid rgba(0,0,0,.08);box-shadow:0 4px 14px rgba(0,0,0,.06);opacity:0}
+.xv-colors{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);display:flex;gap:8px;z-index:3}
+.xv-colors button{display:flex;align-items:center;gap:6px;font:600 13px/1 inherit;font-family:inherit;padding:8px 14px 8px 8px;border-radius:999px;border:1px solid rgba(0,0,0,.1);background:rgba(255,255,255,.9);cursor:pointer;color:#333}
+.xv-colors button i{width:18px;height:18px;border-radius:50%;display:block}
+.xv-colors button.on{border-color:#222;box-shadow:0 0 0 1px #222}
 .xv-fallback{display:none}
 @media (max-width:860px){.xv-sticky{grid-template-columns:1fr;grid-template-rows:auto 1fr}.xv-text{padding:88px 24px 0;height:200px}.xv-step{top:110px}.xv-stage{height:calc(100vh - 200px)}.xv-label{font-size:11px;padding:4px 8px}}
 @media print{#structure{height:auto}.xv-sticky{position:static;height:auto}}
@@ -170,7 +174,7 @@ footer{padding:56px 0 72px;font-size:13px;color:var(--sub);border-top:1px solid 
     <h1>마지막 한 개까지, <em>샛노랗게.</em></h1>
     <div class="sub">착즙 전, 재료가 가장 신선한 순간</div>
     <p>혼자 사는 집은 바나나 한 송이를 다 먹기 전에 버립니다.<br>냉장고도 온장고도 아닌 서늘고가 1~2주 동안 처음 산 날의 색 그대로 지킵니다.</p>
-    <div class="chips"><span class="chip">색 버튼으로 품목 선택</span> <span class="chip">품목별 13~15°C</span> <span class="chip">조리대 위 6.4L</span> <span class="chip">목표가 12.9만 원</span></div>
+    <div class="chips"><span class="chip">버튼 하나로 품목 선택</span> <span class="chip">품목별 13~15°C</span> <span class="chip">조리대 위 6.4L</span> <span class="chip">목표가 12.9만 원</span></div>
   </div>
 </header>
 
@@ -235,8 +239,8 @@ footer{padding:56px 0 72px;font-size:13px;color:var(--sub);border-top:1px solid 
       <h2>걸고, 누르면 끝.</h2>
       <div class="steps">
         <div><i>1</i><div><b>고리에 바나나를 겁니다</b><p>바닥에 닿지 않아 눌린 자국이 생기지 않습니다.</p></div></div>
-        <div><i>2</i><div><b>색 버튼으로 품목을 고릅니다</b><p>노랑·고구마색·빨강 버튼 중 하나를 누르면 LED 색과 온도가 같이 바뀝니다. 앱은 필요 없습니다.</p></div></div>
-        <div><i>3</i><div><b>꺼내 먹기만 하면 됩니다</b><p>익히기 버튼을 누르면 18°C로 익히고, 48시간 뒤 보관 모드로 돌아갑니다.</p></div></div>
+        <div><i>2</i><div><b>버튼 하나로 품목을 고릅니다</b><p>앞면 버튼을 누를 때마다 바나나 → 고구마 → 토마토로 바뀝니다. 빛 링 색과 온도가 같이 바뀌고, 앱은 필요 없습니다.</p></div></div>
+        <div><i>3</i><div><b>꺼내 먹기만 하면 됩니다</b><p>버튼을 길게 누르면 18°C로 익히고, 48시간 뒤 보관 모드로 돌아갑니다.</p></div></div>
       </div>
     </div>
     <div class="photo rv"><img src="img/life.jpg" alt="주방에서 바나나를 꺼내는 장면"></div>
@@ -249,10 +253,10 @@ footer{padding:56px 0 72px;font-size:13px;color:var(--sub);border-top:1px solid 
     <div class="xv-text">
       <div class="xv-step on"><div class="kicker">구조</div><h2>밖에서 보면 단순한 상자.</h2><p>스크롤을 내리면 서늘고가 부품별로 분해됩니다. 다시 올리면 합쳐집니다.</p></div>
       <div class="xv-step"><div class="kicker">구조 · 뒷모습</div><h2>뒤는 숨 쉬는 면.</h2><p>위쪽 슬릿으로 펠티어 열을 내보내고, 아래쪽 슬릿으로 바깥 공기를 빨아들입니다. 12V 전원 단자와 명판도 뒤에 있습니다.</p></div>
-      <div class="xv-step"><div class="kicker">구조 · 분해</div><h2>부품 11개, 냉각은 뒤쪽에.</h2><p>펠티어 소자 하나를 안쪽·바깥쪽 방열판과 팬이 감쌉니다. 안쪽 팬 바람이 UV 광촉매 망을 지나며 에틸렌을 분해하고, 맺힌 물은 바닥 트레이 심지로 돌아가 습도를 지킵니다.</p></div>
+      <div class="xv-step"><div class="kicker">구조 · 분해</div><h2>부품 14개, 냉각은 뒤쪽에.</h2><p>펠티어 소자 하나를 안쪽·바깥쪽 방열판과 팬이 감쌉니다. 안쪽 팬 바람이 UV 광촉매 망을 지나며 에틸렌을 분해하고, 맺힌 물은 바닥 트레이 심지로 돌아가 습도를 지킵니다.</p></div>
       <div class="xv-step"><div class="kicker">구조 · 공기 흐름</div><h2>팬 하나로 냉각, 분해, 순환까지.</h2><p>위쪽 뒤에서 빨아들인 공기가 광촉매 망과 냉각판을 지나 아래 앞쪽으로 나오고, 바나나 주위를 한 바퀴 돕니다. 파란 점이 공기 흐름입니다.</p></div>
     </div>
-    <div class="xv-stage"><canvas id="xv-canvas" aria-label="서늘고 분해도 3D"></canvas><div id="xv-labels"></div></div>
+    <div class="xv-stage"><canvas id="xv-canvas" aria-label="서늘고 분해도 3D"></canvas><div id="xv-labels"></div><div class="xv-colors" role="group" aria-label="하단 색"><button data-xv-color="wood" class="on"><i style="background:#c29a6b"></i>나무</button><button data-xv-color="yellow"><i style="background:#e8b52a"></i>노랑</button><button data-xv-color="green"><i style="background:#8fb46a"></i>초록</button><button data-xv-color="red"><i style="background:#e4573f"></i>빨강</button></div></div>
   </div>
 </section>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
@@ -263,7 +267,7 @@ footer{padding:56px 0 72px;font-size:13px;color:var(--sub);border-top:1px solid 
     <div class="rv">
       <div class="kicker">라인업</div>
       <h2>몸체는 하나, 색이 품목을 알려 줍니다.</h2>
-      <p class="lead">앞면의 색 버튼 3개가 곧 품목입니다. 누른 색으로 LED가 켜지고 온도(13~15°C)가 맞춰집니다. 하단 몸통 색만 바꿔 금형은 그대로 씁니다.</p>
+      <p class="lead">앞면 버튼 하나를 누를 때마다 바나나 → 고구마 → 토마토로 바뀌고, 빛 링 색과 온도(13~15°C)가 같이 맞춰집니다. 몸체는 하나, 하단 색(나무·노랑·초록·빨강)만 바꿔 금형은 그대로 씁니다. <a href="#structure">구조 3D에서 색을 바꿔 보기</a></p>
     </div>
     <div class="photo rv"><img src="img/lineup.jpg" alt="색상별 라인업"></div>
     <div class="modes rv">
@@ -285,7 +289,7 @@ footer{padding:56px 0 72px;font-size:13px;color:var(--sub);border-top:1px solid 
       <div><b>25×28×23</b><span>W×H×D cm · 바닥 25×23cm</span></div>
       <div><b>35dB↓</b><span>소음 목표 · 도서관 수준</span></div>
       <div><b>0.5kWh↓</b><span>하루 전력 목표 · 여름 30°C 실측 필요</span></div>
-      <div><b>4</b><span>버튼 · 노랑·고구마색·빨강 + 익히기 · 앱·블루투스 없음</span></div>
+      <div><b>1</b><span>버튼 · 누를 때마다 바나나 → 고구마 → 토마토 · 길게 누르면 익히기 · 앱·블루투스 없음</span></div>
       <div><b>3벌</b><span>새 금형 · 몸체·커버·문틀</span></div>
       <div><b>12V</b><span>전용 외장 어댑터 · 본체는 저전압이라 인증 부담 축소</span></div>
       <div><b>펠티어</b><span>냉각부는 ODM 기존 플랫폼</span></div>
@@ -303,7 +307,7 @@ footer{padding:56px 0 72px;font-size:13px;color:var(--sub);border-top:1px solid 
     <div class="modes rv">
       <div class="mode"><b>습도</b><div class="t">85~95%</div><p>문을 자석 패킹으로 밀폐해 바나나가 내는 수분을 가둡니다. 냉각판은 안쪽보다 3~4°C만 낮게 돌려 덜 말리고, 맺힌 물은 바닥 트레이 심지로 모아 다시 증발시킵니다. 95%를 넘으면 팬을 잠깐 세게 돌려 물기를 덜어냅니다.</p></div>
       <div class="mode"><b>에틸렌 가스</b><div class="t">UV 광촉매</div><p>냉각 팬 바람길에 작은 UV-A LED(365nm) 1~2개와 광촉매(TiO₂) 망을 둡니다. 밀폐해도 갇힌 가스를 물과 이산화탄소로 분해하므로 필터를 갈 필요가 없습니다. 빛은 안쪽에 가두고 문을 열면 꺼집니다.</p></div>
-      <div class="mode"><b>익히기 모드</b><div class="t">18°C · 48시간</div><p>익히기 버튼을 누르면 18°C로 올리고 UV를 꺼서 가스를 남겨 둡니다. 덜 익은 초록 바나나가 노랗게 익으면 48시간 뒤 14°C 보관 모드로 자동으로 돌아갑니다.</p></div>
+      <div class="mode"><b>익히기 모드</b><div class="t">18°C · 48시간</div><p>버튼을 길게 누르면 18°C로 올리고 UV를 꺼서 가스를 남겨 둡니다. 덜 익은 초록 바나나가 노랗게 익으면 48시간 뒤 14°C 보관 모드로 자동으로 돌아갑니다.</p></div>
     </div>
   </div>
 </section>
