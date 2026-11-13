@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const sec = document.getElementById('structure');
 const canvas = document.getElementById('xv-canvas');
@@ -96,8 +95,8 @@ function gradPlane(w, h, x, y, z, rx) {
   }
   geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); return geo;
 }
-// 1. 겉 케이스 — AI 3D(이미지→3D)로 뽑은 실물 모양. 흰 몸체·나무 하단은 높이로 칠하고, 앞 둥근 창 자리는 뚫어 안이 보이게
-const SHELL = { s: new THREE.Vector3(3.2 * 1.15314, 3.2 * 1.00105, 3.2 * 1.31936), hole: new THREE.Vector2(-0.023 * 3.69, 0.0516 * 3.2), holeR: 1.0, seam: -0.375 * 3.2 };
+// 1. 겉 케이스 — 모서리 둥근 상자. 흰 몸체·나무 하단은 높이로 칠하고, 앞 둥근 창 자리는 뚫어 안이 보이게
+const SHELL = { s: new THREE.Vector3(1, 1, 1), hole: new THREE.Vector2(0, 0.165), holeR: 1.0, seam: BASE - H / 2 };   // 몸체 가운데 기준(앞 = -z, 뒤에서 180° 돌림)
 const WIN_C = new THREE.Vector2(-SHELL.hole.x, CY0 + SHELL.hole.y), WIN_R = SHELL.holeR, FRONT_Z = D / 2;   // 회전(앞=+z) 뒤 창 가운데
 // 하단 색 — 나무(기본)·노랑·초록·빨강. 몸체·창은 그대로, 하단과 버튼 링만 바뀝니다
 const COLORS = {
@@ -121,18 +120,16 @@ M.case.onBeforeCompile = sh => {
   sh.fragmentShader = 'uniform vec3 uBaseA; uniform vec3 uBaseB; uniform float uGrain; uniform vec2 uHole; uniform float uHoleR; uniform float uSeam;\nvarying vec3 vS;\n' + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
     if (vS.z < 0.0 && length(vS.xy - uHole) < uHoleR) discard;
     if (vS.y < uSeam) {
-      float g = sin(vS.x * 22.0 + sin(vS.z * 2.3 + vS.x * 1.7) * 3.0) * 0.5 + 0.5;
+      float g = sin(vS.y * 70.0 + sin(vS.x * 1.3 + vS.z * 1.1) * 4.0 + sin(vS.x * 7.0) * 0.6) * 0.5 + 0.5;
       diffuseColor.rgb = mix(uBaseA, uBaseB, g * uGrain);
     }
     if (abs(vS.y - uSeam) < 0.012) diffuseColor.rgb *= 0.55;`);
 };
 {
   const g = new THREE.Group();
-  new GLTFLoader().load(new URL('img/seoneulgo_shell.glb', import.meta.url).href, gl => {
-    gl.scene.traverse(o => { if (o.isMesh) { o.geometry.deleteAttribute('normal'); o.geometry.computeVertexNormals(); o.material = M.case; o.castShadow = true; } });
-    gl.scene.scale.copy(SHELL.s); gl.scene.rotation.y = Math.PI; gl.scene.position.set(0, H / 2, -0.034);
-    g.add(gl.scene);
-  });
+  // 겉 몸체: 준보 님 이미지 비율(폭1:높이1:깊이0.95)의 모서리 둥근 상자. AI 3D 모형은 뒤 윗모서리가 울퉁불퉁해 매끈한 면으로 다시 만듦
+  const shell = new THREE.Mesh(new RoundedBoxGeometry(W, H, D, 10, 0.42), M.case);
+  shell.rotation.y = Math.PI; shell.position.set(0, H / 2, 0); shell.castShadow = true; g.add(shell);
   // 안쪽 라이너(천장·바닥·양옆·뒷벽) — 크림색, 창으로 보이는 안쪽 방
   const iw = W - 0.42, ih = HB - 0.5, iz0 = LIN_Z0, iz1 = D / 2 - 0.45;
   const ld = iz1 - iz0, lz = (iz0 + iz1) / 2;
@@ -168,33 +165,44 @@ M.case.onBeforeCompile = sh => {
   g.position.set(WIN_C.x, BASE + 0.17, FRONT_Z + 0.005);
   part('버튼 1개 · 누를 때마다 바나나→고구마→토마토', g, [0, -0.3, 1.6], new THREE.Vector3(0, -0.15, 0));
 }
-// 4. 바나나 + 고리 — 천장에 걸려 창 가운데에 보이게
+// 4. 바나나 + 고리 — 천장 받침에서 짧은 막대·S고리로 걸고, 실제 바나나처럼(모난 단면·초록 꼭지·갈색 끝)
 {
   const g = new THREE.Group();
-  const BY = CY + 0.4, CEIL = CY + (HB - 0.5) / 2, L = (CEIL - BY) / 0.8 - 0.06;   // 천장 가운데 고리에서 줄로 늘어뜨림
-  const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, L, 10), M.tip); rod.position.y = 0.06 + L / 2; g.add(rod);
-  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.03, 24), M.alu); cap.position.y = 0.06 + L; g.add(cap);
-  const hook = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.012, 8, 24, Math.PI * 1.4), M.ceramic); hook.rotation.z = -Math.PI * 0.2; hook.position.y = 0.06; g.add(hook);
-  const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.14, 12), M.stem); crown.position.y = -0.02; g.add(crown);
-  const SEG = 40, RAD = 12;
-  for (let i = 0; i < 5; i++) {
-    const k = i - 2, sp = [0.04, 0.1, 0.14, 0.16, 0.16], zz = 0.05 - Math.abs(k) * 0.05 + (i % 2) * 0.06;
-    const base = [[0, -0.05], [-0.04, -0.42], [-0.14, -0.78], [-0.3, -0.98], [-0.44, -1.02]];
-    const pts = base.map(([x, y], j) => new THREE.Vector3(x + k * sp[j] * 1.4 + 0.12, y + Math.abs(k) * 0.04 * j / 4, zz * j / 4 + 0.05));
-    const curve = new THREE.CatmullRomCurve3(pts);
-    const geo = new THREE.TubeGeometry(curve, SEG, 0.12, RAD);
-    // 양 끝을 가늘게
-    const pos = geo.attributes.position, v = new THREE.Vector3();
-    for (let k = 0; k <= SEG; k++) {
-      const t = k / SEG, f = Math.min(1, Math.sin(Math.PI * t) * 1.6 + 0.25), c = curve.getPointAt(t);
-      for (let j = 0; j <= RAD; j++) { const vi = k * (RAD + 1) + j; v.fromBufferAttribute(pos, vi).sub(c).multiplyScalar(f).add(c); pos.setXYZ(vi, v.x, v.y, v.z); }
-    }
-    geo.computeVertexNormals();
-    g.add(new THREE.Mesh(geo, M.banana));
-    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.028, 10, 10), M.tip); tip.position.copy(pts[4]); g.add(tip);
-  }
-  g.scale.setScalar(0.8); g.position.set(WIN_C.x - 0.06, BY, 0.6);   // 바나나 = 창 높이의 약 절반
-  part('바나나 고리 · 눌림 방지', g, [0, 1.5, 0.9], new THREE.Vector3(-0.45, -0.5, 0.3));
+  const CEIL = CY + (HB - 0.5) / 2, CROWN = WIN_C.y + 0.62;   // 송이 꼭지 = 창 위쪽 1/5
+  const L = CEIL - CROWN - 0.16;
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.04, 32), M.ceramic); cap.position.y = CEIL - CROWN - 0.02; g.add(cap);
+  const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, L, 12), M.ceramic); rod.position.y = 0.16 + L / 2; g.add(rod);
+  const hook = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.011, 10, 32, Math.PI * 1.5), M.ceramic); hook.rotation.z = Math.PI * 0.75; hook.position.y = 0.1; g.add(hook);
+  const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.075, 0.13, 7), M.stem); crown.position.y = 0.0; g.add(crown);
+  const cTop = new THREE.Color(0x9a9a3a), cBody = new THREE.Color(0xf5c518), cBody2 = new THREE.Color(0xeab010), cTip = new THREE.Color(0x3b2a18);
+  const mat = new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.5, clearcoat: 0.25, clearcoatRoughness: 0.6, sheen: 0.3 });
+  const SEG = 48, RAD = 20;
+  // [꼭지에서 뻗는 방향(앞=0), 길이, 굵기, 처짐] — 송이가 좌우로 부채처럼 퍼지고 끝은 안쪽으로 굽음
+  [[-1.25, 0.95, 0.1, 1.0], [-0.65, 1.05, 0.11, 0.95], [0.0, 1.1, 0.115, 0.9], [0.62, 1.04, 0.11, 0.95], [1.2, 0.95, 0.1, 1.0], [-0.3, 0.92, 0.1, 1.05], [0.35, 0.9, 0.1, 1.05]]
+    .forEach(([phi, len, th, sag], i) => {
+      const back = i >= 5 ? -1 : 1;                       // 뒤쪽 줄 2개
+      const prof = [[0, 0], [0.12, -0.04], [0.3, -0.22], [0.42, -0.5], [0.44, -0.8], [0.36, -1.02]];
+      const pts = prof.map(([r, y]) => new THREE.Vector3(Math.sin(phi) * r * len, y * len * sag * 0.95, Math.cos(phi) * r * len * 0.45 * back));
+      const curve = new THREE.CatmullRomCurve3(pts);
+      const geo = new THREE.TubeGeometry(curve, SEG, th, RAD);
+      const pos = geo.attributes.position, v = new THREE.Vector3(), col = [], c = new THREE.Color();
+      for (let s = 0; s <= SEG; s++) {
+        const t = s / SEG, p = curve.getPointAt(t);
+        const f = t < 0.14 ? 0.32 + 0.68 * Math.pow(t / 0.14, 1.6) : t > 0.86 ? Math.max(0.22, 1 - Math.pow((t - 0.86) / 0.14, 1.3) * 0.8) : 1;
+        for (let j = 0; j <= RAD; j++) {
+          const vi = s * (RAD + 1) + j, a = j / RAD * Math.PI * 2;
+          const ridge = 1 + 0.07 * Math.cos(a * 5);                      // 다섯 모서리 단면
+          v.fromBufferAttribute(pos, vi).sub(p).multiplyScalar(f * ridge).add(p); pos.setXYZ(vi, v.x, v.y, v.z);
+          if (t < 0.12) c.copy(cTop).lerp(cBody, t / 0.12); else if (t > 0.95) c.copy(cTip); else c.copy(cBody).lerp(cBody2, 0.5 + 0.5 * Math.sin(t * 9 + i));
+          col.push(c.r, c.g, c.b);
+        }
+      }
+      geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+      geo.computeVertexNormals();
+      g.add(new THREE.Mesh(geo, mat));
+    });
+  g.position.set(WIN_C.x, CROWN, 0.55);
+  part('바나나 고리 · 눌림 방지', g, [0, 1.5, 0.9], new THREE.Vector3(-0.5, -0.4, 0.3));
 }
 // 5. 바닥 트레이 + 심지 (물 되돌림)
 {
@@ -465,12 +473,20 @@ function frame(now) {
   renderer.render(scene, camera);
 
   // labels
-  const w = canvas.clientWidth, h = canvas.clientHeight;
+  const w = canvas.clientWidth, h = canvas.clientHeight, lab = [];
   parts.forEach(({ obj, el, anchor }) => {
     tmp.copy(anchor); obj.localToWorld(tmp); tmp.project(camera);
-    el.style.transform = `translate(${(tmp.x * 0.5 + 0.5) * w}px, ${(-tmp.y * 0.5 + 0.5) * h}px) translate(-50%,-50%)`;
+    const sx = (tmp.x * 0.5 + 0.5) * w, sy = (-tmp.y * 0.5 + 0.5) * h;
+    lab.push({ el, sx, sy, w: el.offsetWidth || 160, h: el.offsetHeight || 30 });
     el.style.opacity = clamp((e - 0.7) / 0.3);
   });
+  // 이름표 겹침 풀기: 위에서부터 차례로, 겹치면 아래로 밀어냄
+  lab.sort((a, b) => a.sy - b.sy);
+  for (let i = 0; i < lab.length; i++) for (let j = 0; j < i; j++) {
+    const a = lab[j], b = lab[i];
+    if (Math.abs(a.sx - b.sx) < (a.w + b.w) / 2 + 6 && Math.abs(a.sy - b.sy) < (a.h + b.h) / 2 + 4) b.sy = a.sy + (a.h + b.h) / 2 + 4;
+  }
+  lab.forEach(({ el, sx, sy }) => { el.style.transform = `translate(${sx}px, ${sy}px) translate(-50%,-50%)`; });
 
   // steps
   const idx = p < 0.1 ? 0 : p < 0.3 ? 1 : p < 0.76 ? 2 : 3;
