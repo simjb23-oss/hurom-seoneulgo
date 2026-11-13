@@ -10,37 +10,50 @@ const stepEls = [...document.querySelectorAll('.xv-step')];
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-scene.add(new THREE.HemisphereLight(0xffffff, 0xe9e4da, 0.6));
-const sun = new THREE.DirectionalLight(0xffffff, 1.2); sun.position.set(4, 6, 5); scene.add(sun);
+scene.add(new THREE.HemisphereLight(0xffffff, 0xe6ddcf, 1.1));
+const sun = new THREE.DirectionalLight(0xfffaf2, 1.6); sun.position.set(-2, 9, 5); scene.add(sun);
+const fill = new THREE.DirectionalLight(0xffffff, 0.6); fill.position.set(6, 2, 3); scene.add(fill);
+const rim = new THREE.DirectionalLight(0xffffff, 0.9); rim.position.set(1, 4, -7); scene.add(rim);
 
-const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 100);
 
-/* ---------- materials ---------- */
+/* ---------- materials (대표 이미지 기준: 무광 웜화이트 · 오크 · 따뜻한 링 조명) ---------- */
 const M = {
-  shell: new THREE.MeshPhysicalMaterial({ color: 0xf6f3ee, roughness: 0.55, clearcoat: 0.3 }),
-  liner: new THREE.MeshStandardMaterial({ color: 0xfbf8f1, roughness: 0.8 }),
-  oak: new THREE.MeshStandardMaterial({ color: 0xd8b98b, roughness: 0.7 }),
-  glass: new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.05, transmission: 0.9, thickness: 0.05, transparent: true, opacity: 0.35 }),
-  led: new THREE.MeshStandardMaterial({ color: 0xffd23f, emissive: 0xffc21a, emissiveIntensity: 1.6 }),
+  shell: new THREE.MeshPhysicalMaterial({ color: 0xf8f6f1, roughness: 0.62, clearcoat: 0.15, clearcoatRoughness: 0.5 }),
+  liner: new THREE.MeshStandardMaterial({ color: 0xf2e2c2, roughness: 0.85, emissive: 0xffd896, emissiveIntensity: 0.32, side: THREE.BackSide }),
+  oak: new THREE.MeshStandardMaterial({ color: 0xc2955e, roughness: 0.75 }),
+  glass: new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.04, transparent: true, opacity: 0.1, envMapIntensity: 1.5, depthWrite: false }),
+  led: new THREE.MeshStandardMaterial({ color: 0xffd27a, emissive: 0xffa82e, emissiveIntensity: 2.2 }),
+  halo: new THREE.MeshBasicMaterial({ color: 0xffc35a, transparent: true, opacity: 0.22, depthWrite: false }),
+  gold: new THREE.MeshStandardMaterial({ color: 0xc9a06a, metalness: 0.6, roughness: 0.35 }),
   alu: new THREE.MeshStandardMaterial({ color: 0xc9ced4, metalness: 0.9, roughness: 0.35 }),
-  dark: new THREE.MeshStandardMaterial({ color: 0x2b2d31, roughness: 0.6 }),
-  ceramic: new THREE.MeshStandardMaterial({ color: 0xf2f2ee, roughness: 0.4 }),
+  dark: new THREE.MeshStandardMaterial({ color: 0x3a3c40, roughness: 0.6 }),
+  ceramic: new THREE.MeshStandardMaterial({ color: 0xf4f2ee, roughness: 0.4 }),
   uv: new THREE.MeshStandardMaterial({ color: 0xb79cff, emissive: 0x8a5cff, emissiveIntensity: 2.2 }),
-  mesh: new THREE.MeshStandardMaterial({ color: 0xd9d9d9, wireframe: true }),
-  tray: new THREE.MeshStandardMaterial({ color: 0xe9eef2, roughness: 0.5 }),
-  wick: new THREE.MeshStandardMaterial({ color: 0xcfe3ea, roughness: 1 }),
-  banana: new THREE.MeshStandardMaterial({ color: 0xf5cd2b, roughness: 0.6 }),
-  stem: new THREE.MeshStandardMaterial({ color: 0x7a5a2e, roughness: 0.8 }),
+  mesh: new THREE.MeshStandardMaterial({ color: 0xbfbfbf, wireframe: true }),
+  tray: new THREE.MeshStandardMaterial({ color: 0xf1ede5, roughness: 0.5 }),
+  wick: new THREE.MeshStandardMaterial({ color: 0xd9e6ea, roughness: 1 }),
+  banana: new THREE.MeshStandardMaterial({ color: 0xe6b000, roughness: 0.45 }),
+  tip: new THREE.MeshStandardMaterial({ color: 0x4a3a22, roughness: 0.8 }),
+  stem: new THREE.MeshStandardMaterial({ color: 0x8a6a3a, roughness: 0.8 }),
+  vent: new THREE.MeshStandardMaterial({ color: 0x55575c, roughness: 0.7 }),
+  label: new THREE.MeshStandardMaterial({ color: 0xd9d6cf, roughness: 0.6 }),
+  gasket: new THREE.MeshStandardMaterial({ color: 0xdcdad5, roughness: 0.9 }),
+  wireR: new THREE.MeshStandardMaterial({ color: 0xd23a2f, roughness: 0.5 }),
+  wireB: new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.5 }),
   air: new THREE.MeshBasicMaterial({ color: 0x5aa9ff, transparent: true, opacity: 0 }),
 };
 
-/* ---------- product (units: 10cm) W2.5 H2.8 D2.3 ---------- */
-const W = 2.5, H = 2.8, D = 2.3, BASE = 0.35;
+/* ---------- product (units: 10cm) W2.6 H2.9 D2.4 ---------- */
+const W = 2.6, D = 2.4, BASE = 0.4, HB = 2.5, H = BASE + HB, R = 0.42;
+const CY = BASE + HB / 2;               // 몸체 가운데 높이
+const WIN_R = 0.9, WIN_Y = 0.12;        // 둥근 창 반지름 · 가운데에서 위로
 const product = new THREE.Group(); scene.add(product);
 const parts = [];
 function part(name, obj, offset, labelAnchor = new THREE.Vector3()) {
@@ -51,151 +64,205 @@ function part(name, obj, offset, labelAnchor = new THREE.Vector3()) {
   parts.push({ obj, el, anchor: labelAnchor });
   return obj;
 }
+function rrect(w, h, r, s = new THREE.Shape()) {
+  s.moveTo(-w / 2 + r, -h / 2); s.lineTo(w / 2 - r, -h / 2); s.quadraticCurveTo(w / 2, -h / 2, w / 2, -h / 2 + r);
+  s.lineTo(w / 2, h / 2 - r); s.quadraticCurveTo(w / 2, h / 2, w / 2 - r, h / 2); s.lineTo(-w / 2 + r, h / 2);
+  s.quadraticCurveTo(-w / 2, h / 2, -w / 2, h / 2 - r); s.lineTo(-w / 2, -h / 2 + r); s.quadraticCurveTo(-w / 2, -h / 2, -w / 2 + r, -h / 2);
+  return s;
+}
+const BEV = 0.1;
 
-// 1. 몸체(바깥 껍데기) — 앞이 열린 상자
+// 1. 몸체 — 모서리가 크게 둥근 통(앞뒤가 열림) + 크림색 안쪽
 {
   const g = new THREE.Group();
-  const t = 0.12;
-  const top = new THREE.Mesh(new RoundedBoxGeometry(W, t, D, 4, 0.05), M.shell); top.position.y = H - t / 2; g.add(top);
-  const l = new THREE.Mesh(new RoundedBoxGeometry(t, H - BASE, D, 4, 0.05), M.shell); l.position.set(-W / 2 + t / 2, (H + BASE) / 2, 0); g.add(l);
-  const r = l.clone(); r.position.x = W / 2 - t / 2; g.add(r);
-  const bot = new THREE.Mesh(new THREE.BoxGeometry(W, t, D), M.shell); bot.position.y = BASE + t / 2; g.add(bot);
-  const inner = new THREE.Mesh(new THREE.BoxGeometry(W - 0.3, H - BASE - 0.3, 0.04), M.liner); inner.position.set(0, (H + BASE) / 2, -D / 2 + 0.75); g.add(inner);
-  part('몸체 · 단열 2.5cm', g, [0, 0, 0], new THREE.Vector3(-W / 2, H - 0.2, 0));
+  const s = rrect(W - 2 * BEV, HB - 2 * BEV, R - BEV);
+  s.holes.push(rrect(W - 0.5, HB - 0.5, R - 0.2, new THREE.Path()));
+  const depth = D - 0.25 - 2 * BEV;
+  const tube = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: true, bevelSize: BEV, bevelThickness: BEV, bevelSegments: 8, curveSegments: 24 }), M.shell);
+  tube.position.set(0, CY, -D / 2 + BEV); g.add(tube);
+  // 안쪽 라이너(천장·바닥·양옆·뒷벽) — 뒷벽이 냉각 모듈을 가립니다
+  const iw = W - 0.52, ih = HB - 0.52, iz0 = -D / 2 + 1.2, iz1 = D / 2 - 0.1;
+  const liner = new THREE.Mesh(new RoundedBoxGeometry(iw, ih, iz1 - iz0, 6, R - 0.22), M.liner);
+  liner.position.set(0, CY, (iz0 + iz1) / 2); g.add(liner);
+  const mount = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.05, 32), M.ceramic); mount.position.set(0, CY + ih / 2 - 0.03, -0.1); g.add(mount);
+  const light = new THREE.PointLight(0xffd99a, 1.2, 3.2, 1.5); light.position.set(0, CY + 0.5, 0.3); g.add(light);
+  part('몸체 · 단열 2.5cm', g, [0, 0, 0], new THREE.Vector3(-W / 2, H - 0.2, -0.4));
 }
-// 2. 받침(오크)
+// 2. 받침(오크) — 몸체보다 살짝 안쪽
 {
-  const m = new THREE.Mesh(new RoundedBoxGeometry(W, BASE, D, 4, 0.08), M.oak); m.position.y = BASE / 2;
-  part('받침 띠 · 색으로 라인업', m, [0, -1.3, 0], new THREE.Vector3(W / 2, BASE / 2, 0));
+  const m = new THREE.Mesh(new RoundedBoxGeometry(W - 0.08, BASE, D - 0.08, 6, 0.14), M.oak); m.position.y = BASE / 2;
+  part('받침 띠 · 색으로 라인업', m, [0, -1.2, 0], new THREE.Vector3(W / 2, 0, 0));
 }
-// 3. 문 + 둥근 창 + LED 링 + 버튼 4개
+// 3. 문 — 앞판 + 큰 둥근 창 + 빛나는 링 + 버튼 4개
 {
   const g = new THREE.Group();
-  const shape = new THREE.Shape();
-  const w = W, h = H - BASE, r = 0.18;
-  shape.moveTo(-w / 2 + r, 0); shape.lineTo(w / 2 - r, 0); shape.quadraticCurveTo(w / 2, 0, w / 2, r);
-  shape.lineTo(w / 2, h - r); shape.quadraticCurveTo(w / 2, h, w / 2 - r, h); shape.lineTo(-w / 2 + r, h);
-  shape.quadraticCurveTo(-w / 2, h, -w / 2, h - r); shape.lineTo(-w / 2, r); shape.quadraticCurveTo(-w / 2, 0, -w / 2 + r, 0);
-  const hole = new THREE.Path(); hole.absarc(0, h * 0.56, 0.82, 0, Math.PI * 2, true); shape.holes.push(hole);
-  const door = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: 0.1, bevelEnabled: true, bevelSize: 0.02, bevelThickness: 0.02, bevelSegments: 2 }), M.shell);
+  const s = rrect(W - 2 * BEV, HB - 2 * BEV, R - BEV);
+  const hole = new THREE.Path(); hole.absarc(0, WIN_Y, WIN_R, 0, Math.PI * 2, true); s.holes.push(hole);
+  const door = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth: 0.06, bevelEnabled: true, bevelSize: BEV, bevelThickness: 0.06, bevelSegments: 8, curveSegments: 48 }), M.shell);
   g.add(door);
-  const gl = new THREE.Mesh(new THREE.CircleGeometry(0.82, 64), M.glass); gl.position.set(0, h * 0.56, 0.05); g.add(gl);
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.86, 0.035, 16, 96), M.led); ring.position.set(0, h * 0.56, 0.12); g.add(ring);
-  const cols = [0xf4c21a, 0x9b5f86, 0xef5b4c, 0xffffff];
-  cols.forEach((c, i) => {
-    const b = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.04, 32), new THREE.MeshStandardMaterial({ color: c, roughness: 0.4 }));
-    b.rotation.x = Math.PI / 2; b.position.set(-0.36 + i * 0.24, 0.28, 0.13); g.add(b);
+  const gl = new THREE.Mesh(new THREE.CircleGeometry(WIN_R, 64), M.glass); gl.position.set(0, WIN_Y, 0.03); g.add(gl);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(WIN_R + 0.025, 0.028, 16, 128), M.led); ring.position.set(0, WIN_Y, 0.1); g.add(ring);
+  const halo = new THREE.Mesh(new THREE.RingGeometry(WIN_R + 0.05, WIN_R + 0.09, 128), M.halo); halo.position.set(0, WIN_Y, 0.13); g.add(halo);
+  // 버튼: 금색 테두리 원 4개(노랑 · 고구마색 · 빨강 · 익히기)
+  [0xf2c21c, 0x9b5f86, 0xe8584a, 0xffffff].forEach((c, i) => {
+    const x = -0.39 + i * 0.26, y = WIN_Y - WIN_R - 0.3;
+    const r = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.009, 12, 48), M.gold); r.position.set(x, y, 0.125); g.add(r);
+    const d = new THREE.Mesh(new THREE.CircleGeometry(0.035, 32), new THREE.MeshStandardMaterial({ color: c, roughness: 0.4 })); d.position.set(x, y, 0.123); g.add(d);
   });
-  g.position.set(0, BASE, D / 2 - 0.02);
-  part('문 · 둥근 창 + LED 링 · 버튼 4개', g, [0, 0, 2.4], new THREE.Vector3(0, h + 0.15, 0.1));
+  // 안쪽 자석 패킹 · 왼쪽 경첩 2개
+  const gk = rrect(W - 0.5, HB - 0.5, R - 0.2); gk.holes.push(rrect(W - 0.62, HB - 0.62, R - 0.26, new THREE.Path()));
+  const gasket = new THREE.Mesh(new THREE.ExtrudeGeometry(gk, { depth: 0.05, bevelEnabled: false, curveSegments: 16 }), M.gasket); gasket.position.z = -0.1; g.add(gasket);
+  [0.75, -0.75].forEach(y => { const h = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.22, 16), M.alu); h.position.set(-W / 2 + 0.2, y, -0.06); g.add(h); });
+  g.position.set(0, CY, D / 2 - 0.12);
+  part('문 · 둥근 창 + LED 링 · 버튼 4개 · 자석 패킹', g, [0, 0, 2.6], new THREE.Vector3(0, HB / 2 + 0.1, 0.1));
 }
-// 4. 바나나 + 고리
+// 4. 바나나 + 고리 — 천장에 걸려 창 가운데에 보이게
 {
   const g = new THREE.Group();
-  const hook = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.02, 8, 24, Math.PI * 1.3), M.ceramic); hook.position.y = 0.05; g.add(hook);
-  const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.25), M.ceramic); rod.position.y = 0.25; g.add(rod);
+  const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.22), M.ceramic); rod.position.y = 0.2; g.add(rod);
+  const hook = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.012, 8, 24, Math.PI * 1.4), M.ceramic); hook.rotation.z = -Math.PI * 0.2; hook.position.y = 0.06; g.add(hook);
+  const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.14, 12), M.stem); crown.position.y = -0.02; g.add(crown);
+  const SEG = 40, RAD = 12;
   for (let i = 0; i < 5; i++) {
-    const a = (i - 2) * 0.32;
-    const curve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0, -0.02, 0),
-      new THREE.Vector3(Math.sin(a) * 0.25, -0.45, Math.cos(a) * 0.12),
-      new THREE.Vector3(Math.sin(a) * 0.55, -0.95, Math.cos(a) * 0.22),
-      new THREE.Vector3(Math.sin(a) * 0.85, -1.2, Math.cos(a) * 0.3),
-    ]);
-    const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 24, 0.085, 10), M.banana); g.add(tube);
+    const k = i - 2, sp = [0.04, 0.1, 0.14, 0.16, 0.16], zz = 0.05 - Math.abs(k) * 0.05 + (i % 2) * 0.06;
+    const base = [[0, -0.05], [-0.04, -0.42], [-0.14, -0.78], [-0.3, -0.98], [-0.44, -1.02]];
+    const pts = base.map(([x, y], j) => new THREE.Vector3(x + k * sp[j] * 1.4 + 0.12, y + Math.abs(k) * 0.04 * j / 4, zz * j / 4 + 0.05));
+    const curve = new THREE.CatmullRomCurve3(pts);
+    const geo = new THREE.TubeGeometry(curve, SEG, 0.12, RAD);
+    // 양 끝을 가늘게
+    const pos = geo.attributes.position, v = new THREE.Vector3();
+    for (let k = 0; k <= SEG; k++) {
+      const t = k / SEG, f = Math.min(1, Math.sin(Math.PI * t) * 1.6 + 0.25), c = curve.getPointAt(t);
+      for (let j = 0; j <= RAD; j++) { const vi = k * (RAD + 1) + j; v.fromBufferAttribute(pos, vi).sub(c).multiplyScalar(f).add(c); pos.setXYZ(vi, v.x, v.y, v.z); }
+    }
+    geo.computeVertexNormals();
+    g.add(new THREE.Mesh(geo, M.banana));
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.028, 10, 10), M.tip); tip.position.copy(pts[4]); g.add(tip);
   }
-  const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.12), M.stem); g.add(crown);
-  g.position.set(-0.1, H - 0.3, 0.2);
-  part('바나나 고리 · 눌림 방지', g, [-0.2, 0.9, 1.3], new THREE.Vector3(-0.3, -0.2, 0));
+  g.position.set(0, CY + (HB - 0.52) / 2 - 0.3, -0.15);
+  part('바나나 고리 · 눌림 방지', g, [0, 1.5, 0.9], new THREE.Vector3(-0.45, -0.5, 0.3));
 }
 // 5. 바닥 트레이 + 심지 (물 되돌림)
 {
   const g = new THREE.Group();
-  const t = new THREE.Mesh(new RoundedBoxGeometry(W - 0.35, 0.12, D - 0.8, 3, 0.03), M.tray); g.add(t);
-  const w = new THREE.Mesh(new THREE.BoxGeometry(W - 0.6, 0.03, D - 1.0), M.wick); w.position.y = 0.07; g.add(w);
-  g.position.set(0, BASE + 0.2, 0.35);
-  part('물받이 트레이 + 심지 · 습도 85~95%', g, [0, -0.8, 1.4], new THREE.Vector3(-(W - 0.35) / 2, 0, 0));
+  const t = new THREE.Mesh(new RoundedBoxGeometry(W - 0.62, 0.1, D - 1.1, 3, 0.04), M.tray); g.add(t);
+  const w = new THREE.Mesh(new THREE.BoxGeometry(W - 0.8, 0.03, D - 1.3), M.wick); w.position.y = 0.06; g.add(w);
+  g.position.set(0, BASE + 0.33, 0.3);
+  part('물받이 트레이 + 심지 · 습도 85~95%', g, [0, -1.0, 1.6], new THREE.Vector3(-(W - 0.62) / 2, 0, 0));
 }
-// 뒤쪽 냉각 모듈 (안쪽 → 바깥쪽)
-const backZ = -D / 2 + 0.45;
+// 뒤쪽 냉각 모듈 (라이너 뒷벽 뒤 → 뒷커버까지)
+const backZ = -0.42;
+const COOL_Y = CY + 0.35;
 // 6. UV-A LED + 광촉매 망
 {
   const g = new THREE.Group();
   const m = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9, 10, 10), M.mesh); g.add(m);
   const frame = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.0, 0.03), new THREE.MeshStandardMaterial({ color: 0xe8e8e8 }));
-  frame.position.z = -0.03; frame.scale.set(1, 1, 1); g.add(frame);
+  frame.position.z = -0.03; g.add(frame);
   [-0.25, 0.25].forEach(x => { const l = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.05), M.uv); l.position.set(x, 0.55, 0.02); g.add(l); });
-  g.position.set(0, H - 0.85, backZ + 0.35);
-  part('UV-A LED + 광촉매 망 · 에틸렌 분해', g, [-0.4, 2.0, -0.8], new THREE.Vector3(0.5, 0.5, 0));
+  g.position.set(0, COOL_Y, backZ + 0.36);
+  part('UV-A LED + 광촉매 망 · 에틸렌 분해', g, [0, 2.3, -0.2], new THREE.Vector3(0.5, 0.5, 0));
 }
-function sink(fins) {
+function sink(fins, fd = 0.2) {
   const g = new THREE.Group();
   const plate = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.0, 0.06), M.alu); g.add(plate);
-  for (let i = 0; i < fins; i++) { const f = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.0, 0.3), M.alu); f.position.set(-0.45 + i * (0.9 / (fins - 1)), 0, 0.17); g.add(f); }
+  for (let i = 0; i < fins; i++) { const f = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.0, fd), M.alu); f.position.set(-0.45 + i * (0.9 / (fins - 1)), 0, 0.03 + fd / 2); g.add(f); }
   return g;
 }
-function fan() {
+function fan(size = 0.9) {
   const g = new THREE.Group();
-  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.08, 24), M.dark); hub.rotation.x = Math.PI / 2; g.add(hub);
+  // 사각 프레임 + 둥근 구멍 + 모서리 나사 구멍
+  const s = rrect(size, size, 0.06);
+  const hole = new THREE.Path(); hole.absarc(0, 0, size * 0.46, 0, Math.PI * 2, true); s.holes.push(hole);
+  [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([x, y]) => { const h = new THREE.Path(); h.absarc(x * size * 0.4, y * size * 0.4, 0.025, 0, Math.PI * 2, true); s.holes.push(h); });
+  const frame = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth: 0.12, bevelEnabled: false, curveSegments: 32 }), M.dark); frame.position.z = -0.06; g.add(frame);
+  const rotor = new THREE.Group();
+  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.1, 32), M.dark); hub.rotation.x = Math.PI / 2; rotor.add(hub);
+  const sticker = new THREE.Mesh(new THREE.CircleGeometry(0.1, 32), M.ceramic); sticker.position.z = 0.051; rotor.add(sticker);
   for (let i = 0; i < 7; i++) {
-    const b = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.1, 0.01), M.dark);
-    b.position.set(Math.cos(i / 7 * Math.PI * 2) * 0.24, Math.sin(i / 7 * Math.PI * 2) * 0.24, 0);
-    b.rotation.z = i / 7 * Math.PI * 2; b.rotation.x = 0.4; g.add(b);
+    const b = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.12, 0.012), M.dark);
+    const a = i / 7 * Math.PI * 2;
+    b.position.set(Math.cos(a) * 0.26, Math.sin(a) * 0.26, 0); b.rotation.z = a; b.rotation.x = 0.45; rotor.add(b);
   }
-  const box = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.04, 8, 4), M.dark); box.rotation.z = Math.PI / 4; g.add(box);
-  g.userData.spin = true;
+  rotor.userData.spin = true; g.add(rotor);
+  // 전선
+  const wire = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(size * 0.45, -size * 0.3, 0), new THREE.Vector3(size * 0.6, -size * 0.4, 0.05), new THREE.Vector3(size * 0.62, -size * 0.6, 0.1)]), 12, 0.01, 6), M.wireR);
+  g.add(wire);
   return g;
 }
 // 7. 안쪽 방열판 + 순환 팬
 {
   const g = new THREE.Group();
   const s = sink(9); s.rotation.y = Math.PI; g.add(s);
-  const f = fan(); f.position.z = 0.4; g.add(f);
-  g.position.set(0, H - 0.85, backZ + 0.1);
-  part('안쪽 방열판 + 순환 팬 · 0.1~0.3m/s', g, [-1.3, 2.0, -1.7], new THREE.Vector3(0.5, -0.5, 0));
+  const f = fan(); f.position.z = 0.3; g.add(f);
+  g.position.set(0, COOL_Y, backZ + 0.05);
+  part('안쪽 방열판 + 순환 팬 40mm · 0.1~0.3m/s', g, [0, 1.7, -1.1], new THREE.Vector3(0, -0.6, 0.3));
 }
-// 8. 펠티어 소자
+// 8. 펠티어 소자 (TEC1-12706급) + 빨강·검정 전선
 {
-  const m = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.05), M.ceramic);
-  m.position.set(0, H - 0.85, backZ - 0.15);
-  part('펠티어 소자 · 14°C 유지', m, [-2.1, 2.0, -2.5], new THREE.Vector3(-0.2, 0.2, 0));
+  const g = new THREE.Group();
+  const top = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.02), M.ceramic); top.position.z = 0.02; g.add(top);
+  const bot = top.clone(); bot.position.z = -0.02; g.add(bot);
+  const mid = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.38, 0.02), new THREE.MeshStandardMaterial({ color: 0x9aa0a8, metalness: 0.5, roughness: 0.4 })); g.add(mid);
+  [[M.wireR, 0.05], [M.wireB, -0.05]].forEach(([m, y]) => {
+    const c = new THREE.CatmullRomCurve3([new THREE.Vector3(-0.2, y, 0), new THREE.Vector3(-0.4, y - 0.05, 0.02), new THREE.Vector3(-0.55, y - 0.2, 0.05)]);
+    g.add(new THREE.Mesh(new THREE.TubeGeometry(c, 12, 0.012, 6), m));
+  });
+  g.position.set(0, COOL_Y, backZ - 0.15);
+  part('펠티어 소자 · 14°C 유지', g, [0, 2.5, -1.9], new THREE.Vector3(0, 0.45, 0));
 }
 // 9. 바깥 방열판 + 배기 팬
 {
   const g = new THREE.Group();
   const s = sink(11); g.add(s);
-  const f = fan(); f.position.z = 0.42; g.add(f);
-  g.position.set(0, H - 0.85, backZ - 0.3);
+  const f = fan(); f.position.z = 0.3; g.add(f);
+  g.position.set(0, COOL_Y, backZ - 0.3);
   g.rotation.y = Math.PI;
-  part('바깥 방열판 + 배기 팬', g, [-2.9, 2.0, -3.3], new THREE.Vector3(-0.5, 0.5, 0));
+  part('바깥 방열판 + 배기 팬', g, [0, 1.7, -2.7], new THREE.Vector3(0, -0.6, 0));
 }
-// 10. 뒷커버
+// 10. 뒷커버 — 위 배기 슬릿 · 아래 흡기 슬릿 · 12V 전원 단자 · 명판
 {
-  const m = new THREE.Mesh(new RoundedBoxGeometry(W, H - BASE, 0.1, 4, 0.05), M.shell);
-  m.position.set(0, (H + BASE) / 2, -D / 2 - 0.05);
-  part('뒷커버 · 위로 배기, 아래로 흡기', m, [-1.6, 0, -3.4], new THREE.Vector3(W / 2, 0.8, 0));
+  const g = new THREE.Group();
+  const panel = new THREE.Mesh(new RoundedBoxGeometry(W - 0.3, HB - 0.3, 0.12, 6, 0.1), M.shell); g.add(panel);
+  const slot = (y, n, w) => { for (let i = 0; i < n; i++) { const sl = new THREE.Mesh(new RoundedBoxGeometry(w, 0.05, 0.02, 2, 0.02), M.vent); sl.position.set(0, y - i * 0.1, -0.065); g.add(sl); } };
+  slot(0.85, 6, 1.3);   // 배기
+  slot(-0.45, 3, 1.3);  // 흡기
+  const jack = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.04, 24), M.alu); jack.rotation.x = Math.PI / 2; jack.position.set(0.75, -0.85, -0.075); g.add(jack);
+  const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.05, 16), M.vent); pin.rotation.x = Math.PI / 2; pin.position.set(0.75, -0.85, -0.08); g.add(pin);
+  const plate = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.22), M.label); plate.rotation.y = Math.PI; plate.position.set(-0.55, -0.85, -0.062); g.add(plate);
+  g.position.set(0, CY, -D / 2 + 0.06);
+  part('뒷커버 · 위 배기 · 아래 흡기 · 12V 단자', g, [0, 0, -3.6], new THREE.Vector3(W / 2 - 0.15, 0.8, 0));
 }
 // 11. 제어 보드 + 온습도 센서
 {
   const g = new THREE.Group();
-  const pcb = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.5, 0.03), new THREE.MeshStandardMaterial({ color: 0x1f7a4d, roughness: 0.5 }));
-  g.add(pcb);
-  const chip = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.04), M.dark); chip.position.set(-0.15, 0, 0.03); g.add(chip);
-  const sht = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.04), M.ceramic); sht.position.set(0.25, 0.1, 0.03); g.add(sht);
-  g.position.set(0, BASE + 0.45, -D / 2 + 0.2);
-  part('제어 보드 + 온습도 센서', g, [-2.6, -0.6, -0.4], new THREE.Vector3(-0.4, 0, 0));
+  const pcb = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.55, 0.03), new THREE.MeshStandardMaterial({ color: 0x1f7a4d, roughness: 0.5 })); g.add(pcb);
+  const chip = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.04), M.dark); chip.position.set(-0.18, 0.05, 0.03); g.add(chip);
+  [[0.05, 0.15], [0.12, 0.15], [0.05, -0.12]].forEach(([x, y]) => { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.1, 16), M.dark); c.rotation.x = Math.PI / 2; c.position.set(x, y, 0.06); g.add(c); });
+  const conn = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.08, 0.06), M.ceramic); conn.position.set(-0.2, -0.2, 0.04); g.add(conn);
+  const relay = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, 0.08), new THREE.MeshStandardMaterial({ color: 0x2f5fa8, roughness: 0.4 })); relay.position.set(0.3, -0.08, 0.05); g.add(relay);
+  const sht = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.04), M.ceramic); sht.position.set(0.35, 0.18, 0.03); g.add(sht);
+  g.position.set(0, BASE + 0.45, -D / 2 + 0.25);
+  part('제어 보드 + 온습도 센서', g, [0, -1.0, -1.7], new THREE.Vector3(-0.45, 0, 0));
 }
 
 /* airflow arrows (show in assembled state) */
 const airG = new THREE.Group(); product.add(airG);
 {
-  const pts = [new THREE.Vector3(0, H - 0.6, backZ + 0.3), new THREE.Vector3(0, H - 0.5, 0.4), new THREE.Vector3(0.6, H / 2 + 0.2, 0.7), new THREE.Vector3(0.3, BASE + 0.45, 0.6), new THREE.Vector3(0, BASE + 0.5, backZ + 0.3)];
+  const pts = [new THREE.Vector3(0, H - 0.6, backZ + 0.5), new THREE.Vector3(0, H - 0.5, 0.4), new THREE.Vector3(0.6, CY + 0.2, 0.7), new THREE.Vector3(0.3, BASE + 0.5, 0.6), new THREE.Vector3(0, BASE + 0.55, backZ + 0.5)];
   const c = new THREE.CatmullRomCurve3(pts, true);
   airG.add(new THREE.Mesh(new THREE.TubeGeometry(c, 80, 0.018, 6, true), M.air));
   airG.userData.curve = c;
   for (let i = 0; i < 10; i++) { const d = new THREE.Mesh(new THREE.SphereGeometry(0.04, 12, 12), M.air); d.userData.t = i / 10; airG.add(d); }
 }
 
+/* 바닥 그림자 */
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(14, 14), new THREE.ShadowMaterial({ opacity: 0.09 }));
+ground.rotation.x = -Math.PI / 2; ground.position.y = -H / 2 - 0.001; ground.receiveShadow = true; scene.add(ground);
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.radius = 8;
+Object.assign(sun.shadow.camera, { left: -4, right: 4, top: 4, bottom: -4, near: 1, far: 20 });
+product.traverse(o => { if (o.isMesh && o.material !== M.glass && o.material !== M.halo && o.material !== M.air) o.castShadow = true; });
 product.position.y = -H / 2;
 
 /* ---------- scroll ---------- */
@@ -219,20 +286,26 @@ let t0 = performance.now();
 function frame(now) {
   const dt = Math.min(0.1, Math.max(0, (now - t0) / 1000)); t0 = now;
   const p = progress();
-  // 0~.12 조립 상태 회전 · .12~.45 분해 · .45~.72 분해 유지 · .72~.95 다시 조립
-  const e = p < 0.12 ? 0 : p < 0.45 ? ease((p - 0.12) / 0.33) : p < 0.72 ? 1 : p < 0.95 ? 1 - ease((p - 0.72) / 0.23) : 0;
+  // 0~.1 앞모습 · .1~.28 뒤로 돌아 뒷모습 · .28~.5 분해 · .5~.74 분해 유지(천천히 돎) · .74~.95 다시 조립하며 앞으로
+  const e = p < 0.28 ? 0 : p < 0.5 ? ease((p - 0.28) / 0.22) : p < 0.74 ? 1 : p < 0.95 ? 1 - ease((p - 0.74) / 0.21) : 0;
   parts.forEach(({ obj }) => obj.position.copy(obj.userData.home).addScaledVector(obj.userData.off, e));
 
-  const ang = -0.95 + p * 0.35;
-  const dist = 8.5 + e * 9;
-  camera.position.set(Math.sin(ang) * dist, 1.8 + e * 3.2, Math.cos(ang) * dist);
-  camera.lookAt(-e * 0.5, e * 0.5, -e * 1.0);
+  const FRONT = 0.38, BACK = Math.PI + 0.55, XA = 0.85, XB = 1.25;
+  const ang = p < 0.1 ? FRONT
+    : p < 0.28 ? FRONT + (BACK - FRONT) * ease((p - 0.1) / 0.18)
+    : p < 0.5 ? BACK + (XA - BACK) * ease((p - 0.28) / 0.22)
+    : p < 0.74 ? XA + (XB - XA) * ((p - 0.5) / 0.24)
+    : p < 0.95 ? XB + (FRONT - XB) * ease((p - 0.74) / 0.21) : FRONT;
+  ground.material.opacity = 0.09 * (1 - e);
+  const dist = 10 + e * 6.5;
+  camera.position.set(Math.sin(ang) * dist, 1.2 + e * 3.4, Math.cos(ang) * dist);
+  camera.lookAt(0, -0.05 + e * 0.6, -e * 0.6);
 
   // spin fans
   product.traverse(o => { if (o.userData.spin) o.rotation.z += dt * (2 + 10 * (1 - e)); });
 
   // airflow visible when assembled near the end/start
-  const airOn = p > 0.9 || (p > 0.02 && p < 0.1) ? 0.85 : 0;
+  const airOn = p > 0.96 ? 0.85 : 0;
   M.air.opacity += (airOn - M.air.opacity) * 0.1;
   const c = airG.userData.curve;
   airG.children.forEach(ch => { if (ch.userData.t !== undefined) { ch.userData.t = (ch.userData.t + dt * 0.12) % 1; ch.position.copy(c.getPointAt(ch.userData.t)); } });
@@ -248,7 +321,7 @@ function frame(now) {
   });
 
   // steps
-  const idx = p < 0.12 ? 0 : p < 0.72 ? 1 : 2;
+  const idx = p < 0.1 ? 0 : p < 0.3 ? 1 : p < 0.76 ? 2 : 3;
   stepEls.forEach((s, i) => s.classList.toggle('on', i === idx));
   requestAnimationFrame(frame);
 }
