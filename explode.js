@@ -270,17 +270,107 @@ function fan(size = 0.9, wired = true) {
   g.position.set(0, CY, -D / 2 + 0.06);
   part('뒷커버 · 위 배기 · 아래 흡기 · 12V 단자', g, [0, 0, -3.6], new THREE.Vector3(W / 2 - 0.15, 0.8, 0));
 }
-// 11. 제어 보드 + 온습도 센서
+// 11. 제어 보드 — 실제 기판처럼: 구리 배선, MCU, 전원부(MOSFET+방열판), 콘덴서, 단자대, 커넥터, 온습도 센서
+const PCBM = {
+  board: new THREE.MeshStandardMaterial({ color: 0x1d6b45, roughness: 0.45, metalness: 0.05 }),
+  trace: new THREE.MeshStandardMaterial({ color: 0xc8a24a, roughness: 0.35, metalness: 0.8 }),
+  pad: new THREE.MeshStandardMaterial({ color: 0xd9d9d9, roughness: 0.3, metalness: 0.9 }),
+  ic: new THREE.MeshStandardMaterial({ color: 0x1b1b1d, roughness: 0.5 }),
+  res: new THREE.MeshStandardMaterial({ color: 0xb08a5a, roughness: 0.5 }),
+  cap: new THREE.MeshStandardMaterial({ color: 0x23395d, roughness: 0.4 }),
+  capTop: new THREE.MeshStandardMaterial({ color: 0xcfd3d8, roughness: 0.3, metalness: 0.8 }),
+  term: new THREE.MeshStandardMaterial({ color: 0x2e8b57, roughness: 0.6 }),
+  jst: new THREE.MeshStandardMaterial({ color: 0xf2efe6, roughness: 0.6 }),
+  silk: new THREE.MeshBasicMaterial({ color: 0xf5f5f0 }),
+  ledG: new THREE.MeshStandardMaterial({ color: 0x2bff6a, emissive: 0x18c94a, emissiveIntensity: 1.5 }),
+  coil: new THREE.MeshStandardMaterial({ color: 0xb87333, metalness: 0.7, roughness: 0.35 }),
+  uvw: new THREE.MeshStandardMaterial({ color: 0x8a5cff, roughness: 0.5 }),
+};
+function pcbBoard(w, h) {
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(new RoundedBoxGeometry(w, h, 0.03, 2, 0.01), PCBM.board));
+  const tr = (x0, y0, x1, y1, t = 0.008) => { const L = Math.hypot(x1 - x0, y1 - y0), m = new THREE.Mesh(new THREE.BoxGeometry(L, t, 0.002), PCBM.trace); m.position.set((x0 + x1) / 2, (y0 + y1) / 2, 0.016); m.rotation.z = Math.atan2(y1 - y0, x1 - x0); g.add(m); };
+  for (let i = 0; i < 9; i++) { const y = -h / 2 + 0.06 + i * (h - 0.12) / 8; tr(-w / 2 + 0.05, y, -0.05, y); tr(-0.05, y, 0.05, y * 0.6); tr(0.05, y * 0.6, w / 2 - 0.08, y * 0.6); }
+  [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([x, y]) => { const r = new THREE.Mesh(new THREE.TorusGeometry(0.022, 0.008, 8, 20), PCBM.pad); r.position.set(x * (w / 2 - 0.04), y * (h / 2 - 0.04), 0.016); g.add(r); });
+  return g;
+}
+{
+  const g = pcbBoard(1.0, 0.62);
+  // MCU (QFP, 사방 핀)
+  const mcu = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.02), PCBM.ic); mcu.position.set(-0.22, 0.08, 0.025); g.add(mcu);
+  for (let i = 0; i < 10; i++) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const pin = new THREE.Mesh(new THREE.BoxGeometry(dx ? 0.025 : 0.005, dx ? 0.005 : 0.025, 0.004), PCBM.pad);
+    const o = -0.06 + i * 0.0133; pin.position.set(-0.22 + (dx ? dx * 0.08 : o), 0.08 + (dy ? dy * 0.08 : o), 0.018); g.add(pin);
+  }
+  const dot = new THREE.Mesh(new THREE.CircleGeometry(0.008, 12), PCBM.silk); dot.position.set(-0.27, 0.13, 0.036); g.add(dot);
+  // 수정 발진자 · 칩 저항/콘덴서
+  const xt = new THREE.Mesh(new RoundedBoxGeometry(0.06, 0.025, 0.02, 2, 0.008), PCBM.pad); xt.position.set(-0.22, -0.04, 0.025); g.add(xt);
+  for (let i = 0; i < 12; i++) { const r = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.012, 0.008), i % 2 ? PCBM.ic : PCBM.res); r.position.set(-0.42 + (i % 4) * 0.04, -0.06 - Math.floor(i / 4) * 0.04, 0.02); g.add(r); }
+  // 전원부: MOSFET(TO-220) 2개 + 방열판 — 펠티어·팬 PWM 구동
+  [0.12, 0.24].forEach(x => {
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.025, 0.1), PCBM.ic); body.position.set(x, 0.2, 0.065); g.add(body);
+    const tab = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.008, 0.06), PCBM.pad); tab.position.set(x, 0.216, 0.14); g.add(tab);
+    for (let k = -1; k <= 1; k++) { const lg = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.008, 0.05), PCBM.pad); lg.position.set(x + k * 0.025, 0.2, 0.02); g.add(lg); }
+  });
+  for (let i = 0; i < 7; i++) { const f = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.008, 0.14), M.alu); f.position.set(0.18, 0.235 + i * 0.012, 0.09); g.add(f); }
+  // 전해 콘덴서(은색 윗면)
+  [[0.38, 0.12, 0.05], [0.38, -0.02, 0.05], [0.03, -0.18, 0.035], [0.1, -0.18, 0.035]].forEach(([x, y, r]) => {
+    const c = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.14, 24), PCBM.cap); c.rotation.x = Math.PI / 2; c.position.set(x, y, 0.085); g.add(c);
+    const t = new THREE.Mesh(new THREE.CircleGeometry(r * 0.9, 24), PCBM.capTop); t.position.set(x, y, 0.156); g.add(t);
+  });
+  // 인덕터(코일)
+  const coil = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.02, 12, 24), PCBM.coil); coil.position.set(0.24, 0.02, 0.04); g.add(coil);
+  // 12V 입력 단자대(초록, 나사 2개)
+  const tb = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.08, 0.08), PCBM.term); tb.position.set(0.4, -0.24, 0.055); g.add(tb);
+  [0.36, 0.44].forEach(x => { const sc = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.01, 16), PCBM.pad); sc.rotation.x = Math.PI / 2; sc.position.set(x, -0.24, 0.1); g.add(sc); });
+  // 커넥터(JST) 6개: 펠티어 · 팬2 · LED · UV · 버튼
+  for (let i = 0; i < 6; i++) { const j = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.04, 0.05), PCBM.jst); j.position.set(-0.42 + i * 0.085, 0.265, 0.04); g.add(j); }
+  // 온습도 센서(SHT40) · 상태 LED
+  const sht = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.015), PCBM.jst); sht.position.set(-0.4, 0.22, 0.025); g.add(sht);
+  const led = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.012, 0.01), PCBM.ledG); led.position.set(-0.05, -0.26, 0.022); g.add(led);
+  g.rotation.x = -Math.PI / 2; g.position.set(0, BASE * 0.42, -D / 2 + 0.6);   // 하단 몸통 안 뒤쪽에 눕힘
+  part('제어 보드 · MCU · MOSFET 구동부 · 12V 단자 · 온습도 센서', g, [2.2, 1.9, -0.5], new THREE.Vector3(-0.5, 0.1, 0));
+}
+// 12. 단열재(발포 우레탄) — 겉 몸체와 안쪽 라이너 사이
 {
   const g = new THREE.Group();
-  const pcb = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.55, 0.03), new THREE.MeshStandardMaterial({ color: 0x1f7a4d, roughness: 0.5 })); g.add(pcb);
-  const chip = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.04), M.dark); chip.position.set(-0.18, 0.05, 0.03); g.add(chip);
-  [[0.05, 0.15], [0.12, 0.15], [0.05, -0.12]].forEach(([x, y]) => { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.1, 16), M.dark); c.rotation.x = Math.PI / 2; c.position.set(x, y, 0.06); g.add(c); });
-  const conn = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.08, 0.06), M.ceramic); conn.position.set(-0.2, -0.2, 0.04); g.add(conn);
-  const relay = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, 0.08), new THREE.MeshStandardMaterial({ color: 0x2f5fa8, roughness: 0.4 })); relay.position.set(0.3, -0.08, 0.05); g.add(relay);
-  const sht = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.04), M.ceramic); sht.position.set(0.35, 0.18, 0.03); g.add(sht);
-  g.rotation.x = -Math.PI / 2; g.position.set(0, BASE * 0.55, -D / 2 + 0.55);   // 하단 몸통 안 뒤쪽에 눕힘
-  part('제어 보드 + 온습도 센서', g, [0, -0.1, -2.2], new THREE.Vector3(-0.45, 0, 0));
+  const foam = new THREE.MeshStandardMaterial({ color: 0xf3e6b5, roughness: 0.95 });
+  const iw = W - 0.42, ih = HB - 0.5, t = 0.1, d = 1.15, zc = 0.55;
+  [[iw + 2 * t, t, d, 0, ih / 2 + t / 2, zc], [iw + 2 * t, t, d, 0, -ih / 2 - t / 2, zc], [t, ih, d, -iw / 2 - t / 2, 0, zc], [t, ih, d, iw / 2 + t / 2, 0, zc], [iw + 2 * t, ih + 2 * t, t, 0, 0, -0.05]]
+    .forEach(([w, h, dd, x, y, z]) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, dd), foam); m.position.set(x, CY + y, z); g.add(m); });
+  part('단열재 · 발포 우레탄 2.5cm', g, [-3.0, 0.2, 0.3], new THREE.Vector3(-W / 2, ih / 2 + 0.2, 0.5));
+}
+// 13. 배선 하네스 — 보드에서 펠티어·팬·LED·UV·버튼으로(빨강 +12V, 검정 GND, 흰 신호)
+{
+  const g = new THREE.Group();
+  const by = BASE * 0.5, bz = -D / 2 + 0.6;
+  const runs = [
+    [M.wireR, [[-0.3, by, bz], [-0.3, CY, backZ - 0.05], [0, COOL_Y, backZ - 0.15]]],
+    [M.wireB, [[-0.26, by, bz], [-0.26, CY, backZ - 0.08], [0.04, COOL_Y, backZ - 0.15]]],
+    [M.wireR, [[-0.15, by, bz], [-0.5, CY - 0.4, backZ - 0.2], [-0.45, COOL_Y - 0.4, backZ - 0.3]]],
+    [PCBM.jst, [[0, by, bz], [-1.14, CY, -0.2], [-1.14, H - 0.3, 0.2], [0, H - 0.26, 0.75]]],
+    [PCBM.jst, [[0.1, by, bz], [1.0, BASE + 0.1, 0.2], [0.2, BASE + 0.05, D / 2 - 0.2]]],
+    [PCBM.uvw, [[0.2, by, bz], [0.6, COOL_Y + 0.3, backZ + 0.1], [0.3, COOL_Y + 0.55, backZ + 0.36]]],
+  ];
+  runs.forEach(([m, p]) => {
+    const c = new THREE.CatmullRomCurve3(p.map(v => new THREE.Vector3(...v)));
+    g.add(new THREE.Mesh(new THREE.TubeGeometry(c, 40, 0.014, 6), m));
+    const plug = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.04, 0.05), PCBM.jst); plug.position.copy(c.getPoint(1)); g.add(plug);
+  });
+  const c0 = new THREE.CatmullRomCurve3(runs[0][1].map(v => new THREE.Vector3(...v)));
+  [0.25, 0.5].forEach(t => { const tie = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.008, 6, 16), M.dark); tie.position.copy(c0.getPoint(t)); g.add(tie); });
+  part('배선 하네스 · +12V · GND · 신호선', g, [1.2, -0.2, -1.5], new THREE.Vector3(-1.05, CY, -0.2));
+}
+// 14. 12V 외장 어댑터 + DC 케이블
+{
+  const g = new THREE.Group();
+  const brick = new THREE.Mesh(new RoundedBoxGeometry(0.7, 0.28, 0.42, 4, 0.06), M.dark); g.add(brick);
+  const lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.14), M.label); lbl.rotation.x = -Math.PI / 2; lbl.position.y = 0.141; g.add(lbl);
+  const c = new THREE.CatmullRomCurve3([new THREE.Vector3(-0.35, 0, 0), new THREE.Vector3(-0.8, -0.1, 0.3), new THREE.Vector3(-0.9, 0.4, 0.9), new THREE.Vector3(-0.7, 0.75, 1.2)]);
+  g.add(new THREE.Mesh(new THREE.TubeGeometry(c, 40, 0.025, 8), M.dark));
+  const plug = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.16, 16), M.dark); plug.position.copy(c.getPoint(1)); g.add(plug);
+  g.position.set(0.9, 0.14, -D / 2 - 0.9);
+  part('12V 외장 어댑터 · 60W', g, [1.2, 0, -2.2], new THREE.Vector3(0.35, 0.2, 0));
 }
 
 /* airflow arrows (show in assembled state) */
@@ -337,6 +427,8 @@ function frame(now) {
   const dist = 10 + e * 6.5;
   camera.position.set(Math.sin(ang) * dist, 1.2 + e * 3.4, Math.cos(ang) * dist);
   camera.lookAt(0, -0.05 + e * 0.6, -e * 0.6);
+  const fk = new URLSearchParams(location.search).get('focus');   // 부품 가까이 보기(캡처용): ?p=0.6&focus=제어
+  if (fk) { const pt = parts.find(q => q.el.textContent.includes(fk)); if (pt) { const c = new THREE.Box3().setFromObject(pt.obj).getCenter(new THREE.Vector3()); camera.position.set(c.x + 1.0, c.y + 1.3, c.z + 1.0); camera.lookAt(c); } }
 
   // spin fans
   product.traverse(o => { if (o.userData.spin) o.rotation.z += dt * (2 + 10 * (1 - e)); });
