@@ -55,7 +55,7 @@ const M = {
 };
 
 /* ---------- product (units: 10cm) W2.6 H2.9 D2.4 ---------- */
-const W = 2.6, D = 2.4, BASE = 0.3, HB = 2.8, H = BASE + HB, R = 0.34;
+const W = 2.6, D = 2.4, BASE = 0.4, HB = 2.8, H = BASE + HB, R = 0.34;
 const CY = BASE + HB / 2;               // 몸체 가운데 높이
 const WIN_W = 1.92, WIN_H = 2.02, WIN_RR = 0.24, WIN_Y = 0.2;  // 둥근 사각 창 · 가운데에서 위로
 const WIN_R = WIN_W / 2;
@@ -83,6 +83,7 @@ function rrect2(w, h, rt, rb, s = new THREE.Shape()) {
   return s;
 }
 
+let BODY_BB;   // 몸체 바깥 크기 — 하단 몸통을 여기에 딱 맞춤
 // 1. 몸체 — 모서리가 크게 둥근 통(앞뒤가 열림) + 크림색 안쪽
 {
   const g = new THREE.Group();
@@ -91,6 +92,7 @@ function rrect2(w, h, rt, rb, s = new THREE.Shape()) {
   const depth = D - 0.25 - 2 * BEV;
   const tube = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: true, bevelSize: BEV, bevelThickness: BEV, bevelSegments: 8, curveSegments: 24 }), M.shell);
   tube.position.set(0, CY, -D / 2 + BEV); g.add(tube);
+  tube.geometry.computeBoundingBox(); BODY_BB = tube.geometry.boundingBox.clone().translate(tube.position);
   // 안쪽 라이너(천장·바닥·양옆·뒷벽) — 뒷벽이 냉각 모듈을 가립니다
   const iw = W - 0.72, ih = HB - 0.72, iz0 = -D / 2 + 1.2, iz1 = D / 2 - 0.1;
   const ld = iz1 - iz0, lz = (iz0 + iz1) / 2;
@@ -101,14 +103,19 @@ function rrect2(w, h, rt, rb, s = new THREE.Shape()) {
   const light = new THREE.PointLight(0xffe08a, 1.0, 3.2, 1.5); light.position.set(0, CY + 0.5, 0.3); g.add(light);
   part('몸체 · 단열 2.5cm', g, [0, 0, 0], new THREE.Vector3(-W / 2, H - 0.2, -0.4));
 }
-// 2. 하단 하우징 — 냉장고 몸체의 아래쪽, 색 플라스틱
+// 2. 하단 몸통 — 냉장고 아래쪽 몸통을 색 플라스틱으로(받침대 아님). 몸체와 바깥 면·모서리가 딱 맞고, 사이에 분할선 하나
 {
-  // 몸체와 같은 단면을 아래로 이어 붙인 색 플라스틱 하단 하우징(받침이 아님)
   const m = new THREE.Group();
-  const bs = rrect2(W - 2 * BEV, BASE - BEV, 0.0001, 0.12);
-  const bg = new THREE.ExtrudeGeometry(bs, { depth: D - 0.1 - 2 * BEV, bevelEnabled: true, bevelSize: BEV, bevelThickness: BEV, bevelSegments: 8, curveSegments: 24 });
-  const band = new THREE.Mesh(bg, M.oak); band.position.set(0, (BASE - BEV) / 2 + BEV, -D / 2 + BEV); m.add(band);
-  part('하단 하우징 · 색 플라스틱(노랑·초록·빨강)', m, [0, -1.0, 0], new THREE.Vector3(W / 2, 0, 0));
+  const GAP = 0.012;                                   // 흰 윗부분과의 얇은 분할선
+  // 위에서 본 단면을 몸체 바깥선(세로 모서리 둥글기 BEV)과 같게 세로로 뽑음 → 겉면이 몸체와 한 면으로 이어짐
+  const bw = BODY_BB.max.x - BODY_BB.min.x, bz0 = BODY_BB.min.z, bz1 = D / 2 - 0.02;   // 앞은 문 앞면까지
+  const bg = new THREE.ExtrudeGeometry(rrect(bw - 0.06, bz1 - bz0 - 0.06, BEV - 0.03), { depth: BASE - GAP - 0.06, bevelEnabled: true, bevelSize: 0.03, bevelThickness: 0.03, bevelSegments: 4, curveSegments: 24 }).rotateX(-Math.PI / 2);
+  const band = new THREE.Mesh(bg, M.oak); band.position.set(0, 0.03, (bz0 + bz1) / 2); m.add(band);
+  const seam = new THREE.Mesh(new THREE.ExtrudeGeometry(rrect(bw - 0.04, bz1 - bz0 - 0.04, BEV - 0.02), { depth: GAP, bevelEnabled: false, curveSegments: 24 }).rotateX(-Math.PI / 2), M.vent);
+  seam.position.set(0, BASE - GAP, (bz0 + bz1) / 2); m.add(seam);
+  // 발은 겉에서 안 보이게 바닥 안쪽으로 넣음
+  [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([x, z]) => { const f = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.012, 20), M.dark); f.position.set(x * (W / 2 - 0.45), 0.004, z * (D / 2 - 0.45)); m.add(f); });
+  part('하단 몸통(색상) · 물받이 트레이·제어 보드 내장', m, [0, 0, 0], new THREE.Vector3(W / 2, BASE / 2, D / 2 - 0.3));
 }
 // 3. 문 — 앞판 + 큰 둥근 사각 창(안쪽 색이 비침) + 버튼 1개
 {
@@ -163,8 +170,8 @@ function rrect2(w, h, rt, rb, s = new THREE.Shape()) {
   const g = new THREE.Group();
   const t = new THREE.Mesh(new RoundedBoxGeometry(W - 0.62, 0.1, D - 1.1, 3, 0.04), M.tray); g.add(t);
   const w = new THREE.Mesh(new THREE.BoxGeometry(W - 0.8, 0.03, D - 1.3), M.wick); w.position.y = 0.06; g.add(w);
-  g.position.set(0, BASE + 0.33, 0.3);
-  part('물받이 트레이 + 심지 · 습도 85~95%', g, [0, -1.0, 1.6], new THREE.Vector3(-(W - 0.62) / 2, 0, 0));
+  g.position.set(0, BASE * 0.45, 0.3);   // 하단 몸통 안 서랍
+  part('물받이 트레이 + 심지 · 습도 85~95%', g, [0, 0, 2.0], new THREE.Vector3(-(W - 0.62) / 2, 0, 0));
 }
 // 뒤쪽 냉각 모듈 (라이너 뒷벽 뒤 → 뒷커버까지)
 const backZ = -0.42;
@@ -258,8 +265,8 @@ function fan(size = 0.9, wired = true) {
   const conn = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.08, 0.06), M.ceramic); conn.position.set(-0.2, -0.2, 0.04); g.add(conn);
   const relay = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, 0.08), new THREE.MeshStandardMaterial({ color: 0x2f5fa8, roughness: 0.4 })); relay.position.set(0.3, -0.08, 0.05); g.add(relay);
   const sht = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.04), M.ceramic); sht.position.set(0.35, 0.18, 0.03); g.add(sht);
-  g.position.set(0, BASE + 0.45, -D / 2 + 0.25);
-  part('제어 보드 + 온습도 센서', g, [0, -1.0, -1.7], new THREE.Vector3(-0.45, 0, 0));
+  g.rotation.x = -Math.PI / 2; g.position.set(0, BASE * 0.55, -D / 2 + 0.55);   // 하단 몸통 안 뒤쪽에 눕힘
+  part('제어 보드 + 온습도 센서', g, [0, -0.1, -2.2], new THREE.Vector3(-0.45, 0, 0));
 }
 
 /* airflow arrows (show in assembled state) */
