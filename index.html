@@ -33,6 +33,16 @@ nav a:hover{color:var(--ink)}
 .eyebrow{font-size:14px;font-weight:600;color:var(--sub);letter-spacing:.02em}
 .hero h1{font-size:clamp(44px,6.4vw,88px);line-height:1.08;font-weight:800;letter-spacing:-0.045em;margin:18px 0 22px;max-width:9em}
 .hero h1 em{font-style:normal;background:linear-gradient(transparent 62%,var(--yellow) 62%)}
+.hero .sub{font-size:clamp(20px,2.2vw,26px);font-weight:700;letter-spacing:-0.02em;margin:-8px 0 18px;color:#222}
+#summary{padding:72px 0;background:#fff;border-bottom:1px solid var(--line)}
+#summary h2{font-size:clamp(26px,3vw,36px);margin:0 0 8px}
+#summary .lead2{font-size:17px;color:var(--sub);margin:0 0 32px;max-width:46em}
+.sum3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.sum3>div{padding:24px;border-radius:16px;background:#faf8f3;border:1px solid var(--line)}
+.sum3 small{display:block;font-size:13px;font-weight:700;color:#b58c00;margin-bottom:10px}
+.sum3 p,.sum3 li{font-size:15px;line-height:1.65;margin:0}
+.sum3 ul{margin:0;padding-left:18px}
+@media (max-width:860px){.sum3{grid-template-columns:1fr}}
 .hero p{font-size:19px;color:#3d3d3d;max-width:22em}
 .chips{display:flex;gap:10px;margin-top:36px;flex-wrap:wrap}
 .chip{font-size:14px;padding:9px 16px;border-radius:999px;background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.06)}
@@ -149,10 +159,24 @@ footer{padding:56px 0 72px;font-size:13px;color:var(--sub);border-top:1px solid 
   <div class="wrap">
     <div class="eyebrow">휴롬 신제품 기획서 · 자취·1인 가구를 위한 과일 보관 가전 · 2026.11</div>
     <h1>마지막 한 개까지, <em>샛노랗게.</em></h1>
+    <div class="sub">착즙 전, 재료가 가장 신선한 순간</div>
     <p>혼자 사는 집은 바나나 한 송이를 다 먹기 전에 버립니다.<br>냉장고도 온장고도 아닌 서늘고가 1~2주 동안 처음 산 날의 색 그대로 지킵니다.</p>
     <div class="chips"><span class="chip">색 버튼으로 품목 선택</span> <span class="chip">품목별 13~15°C</span> <span class="chip">조리대 위 6.4L</span> <span class="chip">목표가 12.9만 원</span></div>
   </div>
 </header>
+
+<section id="summary">
+  <div class="wrap">
+    <div class="kicker">한 장 요약</div>
+    <h2>휴롬 서늘고 — 착즙 전, 재료를 가장 신선하게</h2>
+    <p class="lead2">서늘고는 휴롬의 범위를 착즙 단계에서 재료를 보관하는 단계까지 넓히는 첫 제품입니다.</p>
+    <div class="sum3">
+      <div><small>목적</small><p>휴롬은 「통째로 짜서 영양을 그대로」 마시는 경험을 팝니다. 그런데 주스 맛은 <b>짜기 전 재료 상태</b>에서 이미 반은 정해집니다.</p></div>
+      <div><small>왜 휴롬인가</small><ul><li><b>고객:</b> 과일·채소를 사서 쌓아 두는 사람이 이미 휴롬 고객입니다.</li><li><b>브랜드:</b> 「신선함, 자연 그대로」라는 약속을 보관 단계까지 넓힙니다.</li><li><b>함께 팔기:</b> 원액기와 묶어 팔고, 착즙 레시피(바나나·토마토·당근 등)와 품목 모드를 연결합니다.</li></ul></div>
+      <div><small>풀려는 문제</small><p>냉장고는 열대 과일과 뿌리채소에 너무 차갑고(저온 장해), 실온은 너무 덥습니다. 그래서 재료가 짜기도 전에 무르거나 까매집니다.</p></div>
+    </div>
+  </div>
+</section>
 
 <section id="why">
   <div class="wrap">

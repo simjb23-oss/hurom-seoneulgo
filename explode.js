@@ -26,8 +26,12 @@ const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 100);
 /* ---------- materials (대표 이미지 기준: 무광 웜화이트 · 오크 · 따뜻한 링 조명) ---------- */
 const M = {
   shell: new THREE.MeshPhysicalMaterial({ color: 0xf8f6f1, roughness: 0.62, clearcoat: 0.15, clearcoatRoughness: 0.5 }),
-  liner: new THREE.MeshStandardMaterial({ color: 0xf2e2c2, roughness: 0.85, emissive: 0xffd896, emissiveIntensity: 0.32, side: THREE.BackSide }),
-  oak: new THREE.MeshStandardMaterial({ color: 0xc2955e, roughness: 0.75 }),
+  liner: new THREE.MeshStandardMaterial({ toneMapped: false, color: 0xe6bd34, roughness: 0.9, emissive: 0x6a4f00, emissiveIntensity: 0.2, side: THREE.DoubleSide }),
+  oak: new THREE.MeshStandardMaterial({ color: 0xc89a1c, roughness: 0.8 }),
+  foot: new THREE.MeshStandardMaterial({ color: 0xc9a032, roughness: 0.6 }),
+  tint: new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.05, transparent: true, opacity: 0.12, depthWrite: false }),
+  hingeTab: new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.1, transparent: true, opacity: 0.45 }),
+  bar: new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff2c8, emissiveIntensity: 2 }),
   glass: new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.04, transparent: true, opacity: 0.1, envMapIntensity: 1.5, depthWrite: false }),
   led: new THREE.MeshStandardMaterial({ color: 0xffd27a, emissive: 0xffa82e, emissiveIntensity: 2.2 }),
   halo: new THREE.MeshBasicMaterial({ color: 0xffc35a, transparent: true, opacity: 0.22, depthWrite: false }),
@@ -39,7 +43,7 @@ const M = {
   mesh: new THREE.MeshStandardMaterial({ color: 0xbfbfbf, wireframe: true }),
   tray: new THREE.MeshStandardMaterial({ color: 0xf1ede5, roughness: 0.5 }),
   wick: new THREE.MeshStandardMaterial({ color: 0xd9e6ea, roughness: 1 }),
-  banana: new THREE.MeshStandardMaterial({ color: 0xe6b000, roughness: 0.45 }),
+  banana: new THREE.MeshStandardMaterial({ toneMapped: false, color: 0xf2c81a, roughness: 0.5, emissive: 0x5a4200, emissiveIntensity: 0.4 }),
   tip: new THREE.MeshStandardMaterial({ color: 0x4a3a22, roughness: 0.8 }),
   stem: new THREE.MeshStandardMaterial({ color: 0x8a6a3a, roughness: 0.8 }),
   vent: new THREE.MeshStandardMaterial({ color: 0x55575c, roughness: 0.7 }),
@@ -51,9 +55,10 @@ const M = {
 };
 
 /* ---------- product (units: 10cm) W2.6 H2.9 D2.4 ---------- */
-const W = 2.6, D = 2.4, BASE = 0.4, HB = 2.5, H = BASE + HB, R = 0.42;
+const W = 2.6, D = 2.4, BASE = 0.3, HB = 2.8, H = BASE + HB, R = 0.34;
 const CY = BASE + HB / 2;               // 몸체 가운데 높이
-const WIN_R = 0.9, WIN_Y = 0.12;        // 둥근 창 반지름 · 가운데에서 위로
+const WIN_W = 1.92, WIN_H = 2.02, WIN_RR = 0.24, WIN_Y = 0.2;  // 둥근 사각 창 · 가운데에서 위로
+const WIN_R = WIN_W / 2;
 const product = new THREE.Group(); scene.add(product);
 const parts = [];
 function part(name, obj, offset, labelAnchor = new THREE.Vector3()) {
@@ -76,45 +81,49 @@ const BEV = 0.1;
 {
   const g = new THREE.Group();
   const s = rrect(W - 2 * BEV, HB - 2 * BEV, R - BEV);
-  s.holes.push(rrect(W - 0.5, HB - 0.5, R - 0.2, new THREE.Path()));
+  s.holes.push(rrect(W - 0.4, HB - 0.4, R - 0.18, new THREE.Path()));
   const depth = D - 0.25 - 2 * BEV;
   const tube = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: true, bevelSize: BEV, bevelThickness: BEV, bevelSegments: 8, curveSegments: 24 }), M.shell);
   tube.position.set(0, CY, -D / 2 + BEV); g.add(tube);
   // 안쪽 라이너(천장·바닥·양옆·뒷벽) — 뒷벽이 냉각 모듈을 가립니다
-  const iw = W - 0.52, ih = HB - 0.52, iz0 = -D / 2 + 1.2, iz1 = D / 2 - 0.1;
-  const liner = new THREE.Mesh(new RoundedBoxGeometry(iw, ih, iz1 - iz0, 6, R - 0.22), M.liner);
-  liner.position.set(0, CY, (iz0 + iz1) / 2); g.add(liner);
-  const mount = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.05, 32), M.ceramic); mount.position.set(0, CY + ih / 2 - 0.03, -0.1); g.add(mount);
-  const light = new THREE.PointLight(0xffd99a, 1.2, 3.2, 1.5); light.position.set(0, CY + 0.5, 0.3); g.add(light);
+  const iw = W - 0.72, ih = HB - 0.72, iz0 = -D / 2 + 1.2, iz1 = D / 2 - 0.1;
+  const ld = iz1 - iz0, lz = (iz0 + iz1) / 2;
+  [[iw, ih, 0, 0, iz0, 0, 0], [ld, ih, -iw / 2, 0, lz, 0, Math.PI / 2], [ld, ih, iw / 2, 0, lz, 0, -Math.PI / 2], [iw, ld, 0, ih / 2, lz, Math.PI / 2, 0], [iw, ld, 0, -ih / 2, lz, -Math.PI / 2, 0]]
+    .forEach(([w, h, x, y, z, rx, ry]) => { const pl = new THREE.Mesh(new THREE.PlaneGeometry(w, h), M.liner); pl.position.set(x, CY + y, z); pl.rotation.set(rx, ry, 0); g.add(pl); });
+  const mount = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.05, 24), M.alu); mount.position.set(0, CY + ih / 2 - 0.03, -0.1); g.add(mount);
+  const bar = new THREE.Mesh(new RoundedBoxGeometry(1.2, 0.03, 0.08, 2, 0.015), M.bar); bar.position.set(0, CY + ih / 2 - 0.03, 0.75); g.add(bar);
+  const light = new THREE.PointLight(0xffe08a, 1.0, 3.2, 1.5); light.position.set(0, CY + 0.5, 0.3); g.add(light);
   part('몸체 · 단열 2.5cm', g, [0, 0, 0], new THREE.Vector3(-W / 2, H - 0.2, -0.4));
 }
-// 2. 받침(오크) — 몸체보다 살짝 안쪽
+// 2. 색 플라스틱 하단 — 몸체와 같은 폭, 바닥에 작은 발 4개
 {
-  const m = new THREE.Mesh(new RoundedBoxGeometry(W - 0.08, BASE, D - 0.08, 6, 0.14), M.oak); m.position.y = BASE / 2;
-  part('받침 띠 · 색으로 라인업', m, [0, -1.2, 0], new THREE.Vector3(W / 2, 0, 0));
+  const m = new THREE.Group();
+  const bg = new THREE.ExtrudeGeometry(rrect(W - 0.06, D - 0.06, R - 0.03), { depth: BASE - 0.06, bevelEnabled: true, bevelSize: 0.03, bevelThickness: 0.03, bevelSegments: 4, curveSegments: 24 });
+  bg.rotateX(-Math.PI / 2); const band = new THREE.Mesh(bg, M.oak); band.position.y = 0.05; m.add(band);
+  [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([x, z]) => { const f = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.09, 0.05, 20), M.foot); f.position.set(x * (W / 2 - 0.3), 0.025, z * (D / 2 - 0.3)); m.add(f); });
+  part('색 플라스틱 하단 · 노랑·초록·빨강 라인업', m, [0, -1.2, 0], new THREE.Vector3(W / 2, 0, 0));
 }
-// 3. 문 — 앞판 + 큰 둥근 창 + 빛나는 링 + 버튼 4개
+// 3. 문 — 앞판 + 큰 둥근 사각 창(안쪽 색이 비침) + 버튼 1개
 {
   const g = new THREE.Group();
   const s = rrect(W - 2 * BEV, HB - 2 * BEV, R - BEV);
-  const hole = new THREE.Path(); hole.absarc(0, WIN_Y, WIN_R, 0, Math.PI * 2, true); s.holes.push(hole);
+  const hole = rrect(WIN_W, WIN_H, WIN_RR, new THREE.Path()); hole.getPoints = ((gp) => function (n) { return gp.call(this, n).map(p => p.add(new THREE.Vector2(0, WIN_Y))); })(hole.getPoints); s.holes.push(hole);
   const door = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth: 0.06, bevelEnabled: true, bevelSize: BEV, bevelThickness: 0.06, bevelSegments: 8, curveSegments: 48 }), M.shell);
   g.add(door);
-  const gl = new THREE.Mesh(new THREE.CircleGeometry(WIN_R, 64), M.glass); gl.position.set(0, WIN_Y, 0.03); g.add(gl);
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(WIN_R + 0.025, 0.028, 16, 128), M.led); ring.position.set(0, WIN_Y, 0.1); g.add(ring);
-  const halo = new THREE.Mesh(new THREE.RingGeometry(WIN_R + 0.05, WIN_R + 0.09, 128), M.halo); halo.position.set(0, WIN_Y, 0.13); g.add(halo);
-  // 버튼: 금색 테두리 원 4개(노랑 · 고구마색 · 빨강 · 익히기)
-  [0xf2c21c, 0x9b5f86, 0xe8584a, 0xffffff].forEach((c, i) => {
-    const x = -0.39 + i * 0.26, y = WIN_Y - WIN_R - 0.3;
-    const r = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.009, 12, 48), M.gold); r.position.set(x, y, 0.125); g.add(r);
-    const d = new THREE.Mesh(new THREE.CircleGeometry(0.035, 32), new THREE.MeshStandardMaterial({ color: c, roughness: 0.4 })); d.position.set(x, y, 0.123); g.add(d);
-  });
+  const gl = new THREE.Mesh(new THREE.ShapeGeometry(rrect(WIN_W, WIN_H, WIN_RR), 24), M.tint); gl.position.set(0, WIN_Y, 0.03); g.add(gl);
+  const fr = rrect(WIN_W + 0.06, WIN_H + 0.06, WIN_RR + 0.03); fr.holes.push(rrect(WIN_W, WIN_H, WIN_RR, new THREE.Path()));
+  const frame = new THREE.Mesh(new THREE.ExtrudeGeometry(fr, { depth: 0.03, bevelEnabled: false, curveSegments: 24 }), M.gasket); frame.position.set(0, WIN_Y, 0.1); g.add(frame);
+  // 버튼 1개(테두리 링) — 창 아래 가운데. 짧게 눌러 모드, 길게 눌러 익히기
+  const by = WIN_Y - WIN_H / 2 - 0.2;
+  const bring = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.009, 12, 48), M.dark); bring.position.set(0, by, 0.125); g.add(bring);
+  // 오른쪽 끝 투명 경첩 탭 2개
+  [0.55, -0.55].forEach(y => { const t = new THREE.Mesh(new RoundedBoxGeometry(0.1, 0.32, 0.06, 2, 0.02), M.hingeTab); t.position.set(WIN_W / 2 + 0.03, WIN_Y + y, 0.13); g.add(t); });
   // 안쪽 자석 패킹 · 왼쪽 경첩 2개
-  const gk = rrect(W - 0.5, HB - 0.5, R - 0.2); gk.holes.push(rrect(W - 0.62, HB - 0.62, R - 0.26, new THREE.Path()));
+  const gk = rrect(W - 0.4, HB - 0.4, R - 0.2); gk.holes.push(rrect(W - 0.52, HB - 0.52, R - 0.26, new THREE.Path()));
   const gasket = new THREE.Mesh(new THREE.ExtrudeGeometry(gk, { depth: 0.05, bevelEnabled: false, curveSegments: 16 }), M.gasket); gasket.position.z = -0.1; g.add(gasket);
-  [0.75, -0.75].forEach(y => { const h = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.22, 16), M.alu); h.position.set(-W / 2 + 0.2, y, -0.06); g.add(h); });
+  [0.75, -0.75].forEach(y => { const h = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.22, 16), M.alu); h.position.set(W / 2 - 0.2, y, -0.06); g.add(h); });
   g.position.set(0, CY, D / 2 - 0.12);
-  part('문 · 둥근 창 + LED 링 · 버튼 4개 · 자석 패킹', g, [0, 0, 2.6], new THREE.Vector3(0, HB / 2 + 0.1, 0.1));
+  part('문 · 둥근 사각 창 · 버튼 1개 · 투명 경첩', g, [0, 0, 2.6], new THREE.Vector3(0, HB / 2 + 0.1, 0.1));
 }
 // 4. 바나나 + 고리 — 천장에 걸려 창 가운데에 보이게
 {
@@ -169,7 +178,7 @@ function sink(fins, fd = 0.2) {
   for (let i = 0; i < fins; i++) { const f = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.0, fd), M.alu); f.position.set(-0.45 + i * (0.9 / (fins - 1)), 0, 0.03 + fd / 2); g.add(f); }
   return g;
 }
-function fan(size = 0.9) {
+function fan(size = 0.9, wired = true) {
   const g = new THREE.Group();
   // 사각 프레임 + 둥근 구멍 + 모서리 나사 구멍
   const s = rrect(size, size, 0.06);
@@ -187,14 +196,14 @@ function fan(size = 0.9) {
   rotor.userData.spin = true; g.add(rotor);
   // 전선
   const wire = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(size * 0.45, -size * 0.3, 0), new THREE.Vector3(size * 0.6, -size * 0.4, 0.05), new THREE.Vector3(size * 0.62, -size * 0.6, 0.1)]), 12, 0.01, 6), M.wireR);
-  g.add(wire);
+  if (wired) g.add(wire);
   return g;
 }
 // 7. 안쪽 방열판 + 순환 팬
 {
   const g = new THREE.Group();
   const s = sink(9); s.rotation.y = Math.PI; g.add(s);
-  const f = fan(); f.position.z = 0.3; g.add(f);
+  const f = fan(0.9, false); f.position.z = 0.3; g.add(f);
   g.position.set(0, COOL_Y, backZ + 0.05);
   part('안쪽 방열판 + 순환 팬 40mm · 0.1~0.3m/s', g, [0, 1.7, -1.1], new THREE.Vector3(0, -0.6, 0.3));
 }
