@@ -105,11 +105,13 @@ const COLORS = {
   green: { a: 0x8fb46a, b: 0x8fb46a, grain: 0, ring: 0x9cc477 },
   red: { a: 0xe4573f, b: 0xe4573f, grain: 0, ring: 0xf06a50 },
 };
+// 모드 빛: 바나나(노랑) → 고구마(주황) → 토마토(빨강). 조립된 상태에서 버튼을 누른 것처럼 차례로 바뀜
+const MODES = [{ name: '바나나 14°C', c: 0xffc83c }, { name: '고구마 13°C', c: 0xb36ad8 }, { name: '토마토 15°C', c: 0xff4a3a }];
+const LED = { inner: null, cur: new THREE.Color(0xffc83c), tgt: new THREE.Color(0xffc83c) };
 const BASE_COL = { a: { value: new THREE.Color() }, b: { value: new THREE.Color() }, grain: { value: 0 } };
 function setColor(k) {
   const c = COLORS[k] || COLORS.wood;
   BASE_COL.a.value.set(c.a); BASE_COL.b.value.set(c.b); BASE_COL.grain.value = c.grain;
-  M.btnRing.color.set(c.ring); M.btnRing.emissive.set(c.ring);
   document.querySelectorAll('[data-xv-color]').forEach(b => b.classList.toggle('on', b.dataset.xvColor === k));
 }
 window.xvSetColor = setColor;
@@ -140,7 +142,7 @@ M.case.onBeforeCompile = sh => {
   tun.material = new THREE.MeshStandardMaterial({ color: 0xf3ead6, roughness: 0.8, side: THREE.DoubleSide }); tun.rotation.x = Math.PI / 2; tun.position.set(WIN_C.x, WIN_C.y, (FRONT_Z + iz1) / 2 - 0.02); g.add(tun);
   const mount = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.05, 24), M.ceramic); mount.position.set(WIN_C.x, CY + ih / 2 - 0.03, 0.55); g.add(mount);
   const bar = new THREE.Mesh(new RoundedBoxGeometry(iw - 0.3, 0.03, 0.08, 2, 0.015), M.bar); bar.position.set(0, CY + ih / 2 - 0.03, 0.85); g.add(bar);
-  const light = new THREE.PointLight(0xffe2a8, 1.2, 3.6, 1.5); light.position.set(0, CY + 0.5, 0.6); g.add(light);
+  const light = new THREE.PointLight(0xffe2a8, 1.2, 3.6, 1.5); light.position.set(0, CY + 0.5, 0.6); g.add(light); LED.inner = light;
   part('겉 케이스 · 흰 몸체 + 하단(나무·노랑·초록·빨강)', g, [0, 0, 0], new THREE.Vector3(W / 2 - 0.3, 0.5, 0.9));
 }
 // 2. 문 — 둥근 유리창 + 빛 링 + 패킹·경첩 (분해 때 앞으로 빠짐)
@@ -149,7 +151,13 @@ M.case.onBeforeCompile = sh => {
   const glass = new THREE.Mesh(new THREE.CircleGeometry(WIN_R, 96), M.glass); glass.position.z = -0.02; g.add(glass);
   const bez = new THREE.Mesh(new THREE.RingGeometry(WIN_R + 0.02, WIN_R + 0.26, 160), new THREE.MeshPhysicalMaterial({ color: 0xf6f3ec, roughness: 0.5, clearcoat: 0.2 })); bez.position.z = 0.012; g.add(bez);
   const ring = new THREE.Mesh(new THREE.TorusGeometry(WIN_R + 0.03, 0.02, 16, 160), M.ringLed); ring.position.z = 0.02; g.add(ring);
-  const halo = new THREE.Mesh(new THREE.RingGeometry(WIN_R + 0.03, WIN_R + 0.12, 128), M.halo); halo.position.z = 0.03; g.add(halo);
+  // 빛 번짐: 링 바깥·안쪽으로 부드럽게 퍼지는 빛(그라데이션 텍스처)
+  const glowS = (WIN_R + 0.45) * 2, cv = document.createElement('canvas'); cv.width = cv.height = 512;
+  { const x = cv.getContext('2d'), r1 = 256 * (WIN_R + 0.03) / (glowS / 2), gr = x.createRadialGradient(256, 256, r1 - 40, 256, 256, 256);
+    gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(40 / (296 - r1 + 40) * 0.5, 'rgba(255,255,255,0.55)'); gr.addColorStop(0.18, 'rgba(255,255,255,0.9)'); gr.addColorStop(0.3, 'rgba(255,255,255,0.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = gr; x.fillRect(0, 0, 512, 512); }
+  M.glow = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), color: 0xffc85a, transparent: true, opacity: 0.75, depthWrite: false, toneMapped: false });
+  const halo = new THREE.Mesh(new THREE.PlaneGeometry(glowS, glowS), M.glow); halo.position.z = 0.03; g.add(halo);
   const frame = new THREE.Mesh(new THREE.TorusGeometry(WIN_R - 0.01, 0.03, 12, 160), M.gasket); frame.position.z = -0.05; frame.scale.z = 0.6; g.add(frame);
   const gasket = new THREE.Mesh(new THREE.TorusGeometry(WIN_R + 0.12, 0.035, 10, 160), M.gasket); gasket.position.z = -0.12; g.add(gasket);
   [0.55, -0.55].forEach(y => { const h = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.22, 16), M.alu); h.position.set(-(WIN_R + 0.18), y, -0.1); g.add(h); });
@@ -461,6 +469,16 @@ function frame(now) {
   const fk = new URLSearchParams(location.search).get('focus');   // 부품 가까이 보기(캡처용): ?p=0.6&focus=제어
   if (fk) { const pt = parts.find(q => q.el.textContent.includes(fk)); if (pt) { const c = new THREE.Box3().setFromObject(pt.obj).getCenter(new THREE.Vector3()); camera.position.set(c.x + 1.0, c.y + 1.3, c.z + 1.0); camera.lookAt(c); } }
 
+  // 빛 링: 모드 색으로 숨 쉬듯 켜짐(조립 상태에서 2.6초마다 다음 모드)
+  const mi = Math.floor(now / 2600) % 3; LED.tgt.set(MODES[mi].c); LED.cur.lerp(LED.tgt, 0.08);
+  // 화면에 처음 보일 때 1.8초 동안 서서히 켜짐
+  if (LED.t0 === undefined && sec.getBoundingClientRect().top < innerHeight) LED.t0 = now;
+  const ramp = LED.t0 === undefined ? 0 : Math.min(1, (now - LED.t0) / 1800), on = ramp * ramp * (3 - 2 * ramp);
+  const breathe = on * (0.85 + 0.15 * Math.sin(now / 420));
+  M.ringLed.color.copy(LED.cur).lerp(new THREE.Color(0xffffff), 0.35).lerp(new THREE.Color(0xe8e4dc), 1 - on);
+  if (M.glow) { M.glow.color.copy(LED.cur); M.glow.opacity = 0.75 * breathe; }
+  if (LED.inner) { LED.inner.color.copy(LED.cur).lerp(new THREE.Color(0xfff2d8), 0.6); LED.inner.intensity = 1.2 * breathe; }
+  M.btnRing.color.copy(LED.cur); M.btnRing.emissive.copy(LED.cur).multiplyScalar(on);
   // spin fans
   product.traverse(o => { if (o.userData.spin) o.rotation.z += dt * (2 + 10 * (1 - e)); });
 
