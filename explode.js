@@ -76,11 +76,17 @@ function rrect(w, h, r, s = new THREE.Shape()) {
   return s;
 }
 const BEV = 0.1;
+function rrect2(w, h, rt, rb, s = new THREE.Shape()) {
+  s.moveTo(-w / 2 + rb, -h / 2); s.lineTo(w / 2 - rb, -h / 2); if (rb) s.quadraticCurveTo(w / 2, -h / 2, w / 2, -h / 2 + rb);
+  s.lineTo(w / 2, h / 2 - rt); if (rt) s.quadraticCurveTo(w / 2, h / 2, w / 2 - rt, h / 2); s.lineTo(-w / 2 + rt, h / 2);
+  if (rt) s.quadraticCurveTo(-w / 2, h / 2, -w / 2, h / 2 - rt); s.lineTo(-w / 2, -h / 2 + rb); if (rb) s.quadraticCurveTo(-w / 2, -h / 2, -w / 2 + rb, -h / 2);
+  return s;
+}
 
 // 1. 몸체 — 모서리가 크게 둥근 통(앞뒤가 열림) + 크림색 안쪽
 {
   const g = new THREE.Group();
-  const s = rrect(W - 2 * BEV, HB - 2 * BEV, R - BEV);
+  const s = rrect2(W - 2 * BEV, HB - 2 * BEV, R - BEV, 0.0001);
   s.holes.push(rrect(W - 0.4, HB - 0.4, R - 0.18, new THREE.Path()));
   const depth = D - 0.25 - 2 * BEV;
   const tube = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: true, bevelSize: BEV, bevelThickness: BEV, bevelSegments: 8, curveSegments: 24 }), M.shell);
@@ -95,18 +101,19 @@ const BEV = 0.1;
   const light = new THREE.PointLight(0xffe08a, 1.0, 3.2, 1.5); light.position.set(0, CY + 0.5, 0.3); g.add(light);
   part('몸체 · 단열 2.5cm', g, [0, 0, 0], new THREE.Vector3(-W / 2, H - 0.2, -0.4));
 }
-// 2. 색 플라스틱 하단 — 몸체와 같은 폭, 바닥에 작은 발 4개
+// 2. 하단 하우징 — 냉장고 몸체의 아래쪽, 색 플라스틱
 {
+  // 몸체와 같은 단면을 아래로 이어 붙인 색 플라스틱 하단 하우징(받침이 아님)
   const m = new THREE.Group();
-  const bg = new THREE.ExtrudeGeometry(rrect(W - 0.06, D - 0.06, R - 0.03), { depth: BASE - 0.06, bevelEnabled: true, bevelSize: 0.03, bevelThickness: 0.03, bevelSegments: 4, curveSegments: 24 });
-  bg.rotateX(-Math.PI / 2); const band = new THREE.Mesh(bg, M.oak); band.position.y = 0.05; m.add(band);
-  [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([x, z]) => { const f = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.09, 0.05, 20), M.foot); f.position.set(x * (W / 2 - 0.3), 0.025, z * (D / 2 - 0.3)); m.add(f); });
-  part('색 플라스틱 하단 · 노랑·초록·빨강 라인업', m, [0, -1.2, 0], new THREE.Vector3(W / 2, 0, 0));
+  const bs = rrect2(W - 2 * BEV, BASE - BEV, 0.0001, 0.12);
+  const bg = new THREE.ExtrudeGeometry(bs, { depth: D - 0.1 - 2 * BEV, bevelEnabled: true, bevelSize: BEV, bevelThickness: BEV, bevelSegments: 8, curveSegments: 24 });
+  const band = new THREE.Mesh(bg, M.oak); band.position.set(0, (BASE - BEV) / 2 + BEV, -D / 2 + BEV); m.add(band);
+  part('하단 하우징 · 색 플라스틱(노랑·초록·빨강)', m, [0, -1.0, 0], new THREE.Vector3(W / 2, 0, 0));
 }
 // 3. 문 — 앞판 + 큰 둥근 사각 창(안쪽 색이 비침) + 버튼 1개
 {
   const g = new THREE.Group();
-  const s = rrect(W - 2 * BEV, HB - 2 * BEV, R - BEV);
+  const s = rrect2(W - 2 * BEV, HB - 2 * BEV, R - BEV, 0.0001);
   const hole = rrect(WIN_W, WIN_H, WIN_RR, new THREE.Path()); hole.getPoints = ((gp) => function (n) { return gp.call(this, n).map(p => p.add(new THREE.Vector2(0, WIN_Y))); })(hole.getPoints); s.holes.push(hole);
   const door = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth: 0.06, bevelEnabled: true, bevelSize: BEV, bevelThickness: 0.06, bevelSegments: 8, curveSegments: 48 }), M.shell);
   g.add(door);
