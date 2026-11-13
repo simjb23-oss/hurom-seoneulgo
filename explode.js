@@ -101,15 +101,16 @@ const WIN_C = new THREE.Vector2(-SHELL.hole.x, CY0 + SHELL.hole.y), WIN_R = SHEL
 // 하단 색 — 노랑(기본)·보라·빨강. 몸체·창은 그대로, 하단·창 빛 링·버튼 링이 같은 색으로 바뀝니다
 const COLORS = {
   yellow: { a: 0xe8b52a, b: 0xe8b52a, grain: 0, led: 0xffc83c },
-  purple: { a: 0x9a5fc0, b: 0x9a5fc0, grain: 0, led: 0xa04ff0 },
+  purple: { a: 0x9a5fc0, b: 0x9a5fc0, grain: 0, led: 0x9a4ff0 },
   red: { a: 0xe4573f, b: 0xe4573f, grain: 0, led: 0xff5a3c },
 };
 // 빛 링은 고른 하단 색과 같은 색으로 켜집니다(색을 바꾸면 부드럽게 넘어감)
 const LED = { inner: null, cur: new THREE.Color(0xffc83c), tgt: new THREE.Color(0xffc83c) };
 const BASE_COL = { a: { value: new THREE.Color() }, b: { value: new THREE.Color() }, grain: { value: 0 } };
-function setColor(k) {
+function setColor(k, instant) {
   const c = COLORS[k] || COLORS.yellow;
   BASE_COL.a.value.set(c.a); BASE_COL.b.value.set(c.b); BASE_COL.grain.value = c.grain; LED.tgt.set(c.led);
+  if (instant) LED.cur.copy(LED.tgt);   // 처음 색은 바로, 단추로 바꿀 때만 부드럽게 넘어감
   document.querySelectorAll('[data-xv-color]').forEach(b => b.classList.toggle('on', b.dataset.xvColor === k));
 }
 window.xvSetColor = setColor;
@@ -473,7 +474,7 @@ function frame(now) {
   if (LED.t0 === undefined && sec.getBoundingClientRect().top < innerHeight) LED.t0 = now;
   const ramp = LED.t0 === undefined ? 0 : Math.min(1, (now - LED.t0) / 1800), on = ramp * ramp * (3 - 2 * ramp);
   const breathe = on * (0.85 + 0.15 * Math.sin(now / 420));
-  M.ringLed.color.copy(LED.cur).lerp(new THREE.Color(0xffffff), 0.18).lerp(new THREE.Color(0xe8e4dc), 1 - on);
+  M.ringLed.color.copy(LED.cur).lerp(new THREE.Color(0xffffff), 0.08).lerp(new THREE.Color(0xe8e4dc), 1 - on);
   if (M.glow) { M.glow.color.copy(LED.cur); M.glow.opacity = 0.9 * breathe; }
   if (LED.inner) { LED.inner.color.copy(LED.cur).lerp(new THREE.Color(0xfff2d8), 0.6); LED.inner.intensity = 1.2 * breathe; }
   M.btnRing.color.copy(LED.cur); M.btnRing.emissive.copy(LED.cur).multiplyScalar(on);
@@ -510,6 +511,6 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-setColor(new URLSearchParams(location.search).get('c') || 'yellow');
+setColor(new URLSearchParams(location.search).get('c') || 'yellow', true);
 document.querySelectorAll('[data-xv-color]').forEach(b => b.addEventListener('click', () => setColor(b.dataset.xvColor)));
 document.documentElement.classList.add('xv-ready');
