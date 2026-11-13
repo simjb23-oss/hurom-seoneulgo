@@ -57,7 +57,7 @@ const M = {
 /* ---------- product (units: 10cm) W2.6 H2.9 D2.4 ---------- */
 const W = 2.6, D = 2.4, BASE = 0.4, HB = 2.8, H = BASE + HB, R = 0.34;
 const CY = BASE + HB / 2;               // 몸체 가운데 높이
-const WIN_W = 1.92, WIN_H = 2.02, WIN_RR = 0.24, WIN_Y = 0.2;  // 둥근 사각 창 · 가운데에서 위로
+const WIN_W = 2.2, WIN_H = 2.12, WIN_RR = 0.22, WIN_Y = 0.2;   // 창 = 앞면 너비의 약 85%  // 둥근 사각 창 · 가운데에서 위로
 const WIN_R = WIN_W / 2;
 const product = new THREE.Group(); scene.add(product);
 const parts = [];
@@ -83,23 +83,35 @@ function rrect2(w, h, rt, rb, s = new THREE.Shape()) {
   return s;
 }
 
+// 안쪽 색: 위가 밝고 아래로 갈수록 조금 진하게(높이만으로 색을 정해 벽끼리 이음새가 안 보임)
+const LIN_TOP = new THREE.Color(0xfff0a0), LIN_BOT = new THREE.Color(0xe9b62a);
+M.linerGrad = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, toneMapped: false });
+function gradPlane(w, h, x, y, z, rx) {
+  const geo = new THREE.PlaneGeometry(w, h, 8, 16), pos = geo.attributes.position, col = [], c = new THREE.Color(), yh = (HB - 0.5) / 2;
+  for (let i = 0; i < pos.count; i++) {
+    const wy = rx ? y : y + pos.getY(i);                 // 천장·바닥은 한 높이, 벽은 높이마다
+    const t = THREE.MathUtils.clamp((wy + yh) / (2 * yh), 0, 1); c.copy(LIN_BOT).lerp(LIN_TOP, Math.pow(t, 0.8)); col.push(c.r, c.g, c.b);
+  }
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); return geo;
+}
 let BODY_BB;   // 몸체 바깥 크기 — 하단 몸통을 여기에 딱 맞춤
 // 1. 몸체 — 모서리가 크게 둥근 통(앞뒤가 열림) + 크림색 안쪽
 {
   const g = new THREE.Group();
-  const s = rrect2(W - 2 * BEV, HB - 2 * BEV, R - BEV, 0.0001);
-  s.holes.push(rrect(W - 0.4, HB - 0.4, R - 0.18, new THREE.Path()));
+  const TB = 0.05;   // 옆 베벨을 작게 — 베벨만큼 구멍이 좁아지므로 안쪽 폭 W-0.3 을 지키려고
+  const s = rrect2(W - 2 * TB, HB - 2 * TB, R - TB, 0.0001);
+  s.holes.push(rrect(W - 0.2, HB - 0.2, R - 0.1, new THREE.Path()));
   const depth = D - 0.25 - 2 * BEV;
-  const tube = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: true, bevelSize: BEV, bevelThickness: BEV, bevelSegments: 8, curveSegments: 24 }), M.shell);
+  const tube = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: true, bevelSize: TB, bevelThickness: BEV, bevelSegments: 8, curveSegments: 24 }), M.shell);
   tube.position.set(0, CY, -D / 2 + BEV); g.add(tube);
   tube.geometry.computeBoundingBox(); BODY_BB = tube.geometry.boundingBox.clone().translate(tube.position);
   // 안쪽 라이너(천장·바닥·양옆·뒷벽) — 뒷벽이 냉각 모듈을 가립니다
-  const iw = W - 0.72, ih = HB - 0.72, iz0 = -D / 2 + 1.2, iz1 = D / 2 - 0.1;
+  const iw = W - 0.42, ih = HB - 0.5, iz0 = -D / 2 + 1.2, iz1 = D / 2 - 0.1;
   const ld = iz1 - iz0, lz = (iz0 + iz1) / 2;
   [[iw, ih, 0, 0, iz0, 0, 0], [ld, ih, -iw / 2, 0, lz, 0, Math.PI / 2], [ld, ih, iw / 2, 0, lz, 0, -Math.PI / 2], [iw, ld, 0, ih / 2, lz, Math.PI / 2, 0], [iw, ld, 0, -ih / 2, lz, -Math.PI / 2, 0]]
-    .forEach(([w, h, x, y, z, rx, ry]) => { const pl = new THREE.Mesh(new THREE.PlaneGeometry(w, h), M.liner); pl.position.set(x, CY + y, z); pl.rotation.set(rx, ry, 0); g.add(pl); });
-  const mount = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.05, 24), M.alu); mount.position.set(0, CY + ih / 2 - 0.03, -0.1); g.add(mount);
-  const bar = new THREE.Mesh(new RoundedBoxGeometry(1.2, 0.03, 0.08, 2, 0.015), M.bar); bar.position.set(0, CY + ih / 2 - 0.03, 0.75); g.add(bar);
+    .forEach(([w, h, x, y, z, rx, ry]) => { const pl = new THREE.Mesh(gradPlane(w, h, x, y, z, rx), M.linerGrad); pl.position.set(x, CY + y, z); pl.rotation.set(rx, ry, 0); g.add(pl); });
+  const mount = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.05, 24), M.alu); mount.position.set(-0.08, CY + ih / 2 - 0.03, 0.5); g.add(mount);
+  const bar = new THREE.Mesh(new RoundedBoxGeometry(iw - 0.3, 0.03, 0.08, 2, 0.015), M.bar); bar.position.set(0, CY + ih / 2 - 0.03, 0.75); g.add(bar);
   const light = new THREE.PointLight(0xffe08a, 1.0, 3.2, 1.5); light.position.set(0, CY + 0.5, 0.3); g.add(light);
   part('몸체 · 단열 2.5cm', g, [0, 0, 0], new THREE.Vector3(-W / 2, H - 0.2, -0.4));
 }
@@ -125,7 +137,7 @@ let BODY_BB;   // 몸체 바깥 크기 — 하단 몸통을 여기에 딱 맞춤
   const door = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth: 0.06, bevelEnabled: true, bevelSize: BEV, bevelThickness: 0.06, bevelSegments: 8, curveSegments: 48 }), M.shell);
   g.add(door);
   const gl = new THREE.Mesh(new THREE.ShapeGeometry(rrect(WIN_W, WIN_H, WIN_RR), 24), M.tint); gl.position.set(0, WIN_Y, 0.03); g.add(gl);
-  const fr = rrect(WIN_W + 0.06, WIN_H + 0.06, WIN_RR + 0.03); fr.holes.push(rrect(WIN_W, WIN_H, WIN_RR, new THREE.Path()));
+  const fr = rrect(WIN_W + 0.03, WIN_H + 0.03, WIN_RR + 0.015); fr.holes.push(rrect(WIN_W, WIN_H, WIN_RR, new THREE.Path()));
   const frame = new THREE.Mesh(new THREE.ExtrudeGeometry(fr, { depth: 0.03, bevelEnabled: false, curveSegments: 24 }), M.gasket); frame.position.set(0, WIN_Y, 0.1); g.add(frame);
   // 버튼 1개(테두리 링) — 창 아래 가운데. 짧게 눌러 모드, 길게 눌러 익히기
   const by = WIN_Y - WIN_H / 2 - 0.2;
@@ -133,7 +145,7 @@ let BODY_BB;   // 몸체 바깥 크기 — 하단 몸통을 여기에 딱 맞춤
   // 오른쪽 끝 투명 경첩 탭 2개
   [0.55, -0.55].forEach(y => { const t = new THREE.Mesh(new RoundedBoxGeometry(0.1, 0.32, 0.06, 2, 0.02), M.hingeTab); t.position.set(WIN_W / 2 + 0.03, WIN_Y + y, 0.13); g.add(t); });
   // 안쪽 자석 패킹 · 왼쪽 경첩 2개
-  const gk = rrect(W - 0.4, HB - 0.4, R - 0.2); gk.holes.push(rrect(W - 0.52, HB - 0.52, R - 0.26, new THREE.Path()));
+  const gk = rrect(W - 0.18, HB - 0.18, R - 0.1); gk.holes.push(rrect(W - 0.28, HB - 0.28, R - 0.15, new THREE.Path()));
   const gasket = new THREE.Mesh(new THREE.ExtrudeGeometry(gk, { depth: 0.05, bevelEnabled: false, curveSegments: 16 }), M.gasket); gasket.position.z = -0.1; g.add(gasket);
   [0.75, -0.75].forEach(y => { const h = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.22, 16), M.alu); h.position.set(W / 2 - 0.2, y, -0.06); g.add(h); });
   g.position.set(0, CY, D / 2 - 0.12);
@@ -142,7 +154,9 @@ let BODY_BB;   // 몸체 바깥 크기 — 하단 몸통을 여기에 딱 맞춤
 // 4. 바나나 + 고리 — 천장에 걸려 창 가운데에 보이게
 {
   const g = new THREE.Group();
-  const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.22), M.ceramic); rod.position.y = 0.2; g.add(rod);
+  const BY = CY + 0.75, CEIL = CY + (HB - 0.5) / 2, L = (CEIL - BY) / 0.8 - 0.06;   // 천장 가운데 고리에서 줄로 늘어뜨림
+  const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, L, 10), M.tip); rod.position.y = 0.06 + L / 2; g.add(rod);
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.03, 24), M.alu); cap.position.y = 0.06 + L; g.add(cap);
   const hook = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.012, 8, 24, Math.PI * 1.4), M.ceramic); hook.rotation.z = -Math.PI * 0.2; hook.position.y = 0.06; g.add(hook);
   const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.14, 12), M.stem); crown.position.y = -0.02; g.add(crown);
   const SEG = 40, RAD = 12;
@@ -162,7 +176,7 @@ let BODY_BB;   // 몸체 바깥 크기 — 하단 몸통을 여기에 딱 맞춤
     g.add(new THREE.Mesh(geo, M.banana));
     const tip = new THREE.Mesh(new THREE.SphereGeometry(0.028, 10, 10), M.tip); tip.position.copy(pts[4]); g.add(tip);
   }
-  g.position.set(0, CY + (HB - 0.52) / 2 - 0.3, -0.15);
+  g.scale.setScalar(0.8); g.position.set(-0.06, BY, 0.5);   // 바나나 = 창 높이의 약 절반
   part('바나나 고리 · 눌림 방지', g, [0, 1.5, 0.9], new THREE.Vector3(-0.45, -0.5, 0.3));
 }
 // 5. 바닥 트레이 + 심지 (물 되돌림)
